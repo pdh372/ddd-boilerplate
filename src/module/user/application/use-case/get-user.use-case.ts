@@ -4,7 +4,7 @@ import { Result } from '../../../../shared/domain/result';
 import { User } from '../../domain/user';
 import { UserId } from '../../domain/user-id';
 import { UserRepository } from '../../domain/user.repository';
-import { USER_REPOSITORY } from '../../user.tokens';
+import { USER_REPOSITORY } from '../../user.token';
 
 export interface GetUserRequest {
   userId: string;

@@ -4,8 +4,8 @@ import { Result } from '../../../../shared/domain/result';
 import { User } from '../../domain/user';
 import { UserEmail } from '../../domain/user-email';
 import { UserRepository } from '../../domain/user.repository';
-import { CreateUserDto } from '../dtos/create-user.dto';
-import { USER_REPOSITORY } from '../../user.tokens';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { USER_REPOSITORY } from '../../user.token';
 
 @Injectable()
 export class CreateUserUseCase implements UseCase<CreateUserDto, User> {

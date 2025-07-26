@@ -2,7 +2,7 @@ import { AggregateRoot } from '../../../shared/domain/aggregate-root';
 import { Result } from '../../../shared/domain/result';
 import { UserId } from './user-id';
 import { UserEmail } from './user-email';
-import { UserCreatedEvent } from './events/user-created.event';
+import { UserCreatedEvent } from './event/user-created.event';
 
 interface UserProps {
   email: UserEmail;
