@@ -1,5 +1,5 @@
-import { ValueObject } from '../../../shared/domain/value-object';
-import { Result } from '../../../shared/domain/result';
+import { ValueObject } from '@shared/domain/value-object';
+import { Result } from '@shared/domain/result';
 
 interface UserEmailProps {
   value: string;

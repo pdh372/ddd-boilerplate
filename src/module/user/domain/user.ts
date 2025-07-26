@@ -1,5 +1,5 @@
-import { AggregateRoot } from '../../../shared/domain/aggregate-root';
-import { Result } from '../../../shared/domain/result';
+import { AggregateRoot } from '@shared/domain/aggregate-root';
+import { Result } from '@shared/domain/result';
 import { UserId } from './user-id';
 import { UserEmail } from './user-email';
 import { UserCreatedEvent } from './event/user-created.event';
@@ -36,14 +36,14 @@ export class User extends AggregateRoot<UserId> {
   }
 
   public static create(
-    props: Omit<UserProps, 'createdAt' | 'updatedAt'> | UserProps,
+    props: Omit<UserProps, 'createdAt' | 'updatedAt'>,
     id?: UserId,
   ): Result<User> {
     const now = new Date();
     const userProps: UserProps = {
       ...props,
-      createdAt: 'createdAt' in props ? props.createdAt : now,
-      updatedAt: 'updatedAt' in props ? props.updatedAt : now,
+      createdAt: now,
+      updatedAt: now,
     };
 
     const userId = id ?? UserId.create(Math.random().toString(36).substr(2, 9));

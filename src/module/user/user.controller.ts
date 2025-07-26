@@ -7,9 +7,8 @@ import {
   HttpStatus,
   HttpException,
 } from '@nestjs/common';
-import { CreateUserUseCase } from './application/use-case/create-user.use-case';
-import { GetUserUseCase } from './application/use-case/get-user.use-case';
-import { CreateUserDto } from './application/dto/create-user.dto';
+import { CreateUserUseCase, GetUserUseCase } from './app/use-case';
+import { CreateUserDto } from './app/dto';
 
 @Controller('users')
 export class UserController {

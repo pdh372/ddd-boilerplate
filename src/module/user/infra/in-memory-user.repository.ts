@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '../domain/user';
-import { UserId } from '../domain/user-id';
-import { UserEmail } from '../domain/user-email';
-import { UserRepository } from '../domain/user.repository';
+import { User, UserId, UserEmail, UserRepository } from '../domain';
 import { UserMapper, UserPersistence } from './user.mapper';
 
 @Injectable()

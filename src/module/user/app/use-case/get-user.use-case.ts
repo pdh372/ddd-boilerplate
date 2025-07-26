@@ -1,9 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { UseCase } from '../../../../shared/application/use-case';
-import { Result } from '../../../../shared/domain/result';
-import { User } from '../../domain/user';
-import { UserId } from '../../domain/user-id';
-import { UserRepository } from '../../domain/user.repository';
+import { UseCase } from '@shared/application/use-case';
+import { Result } from '@shared/domain/result';
+import { User, UserId, UserRepository } from '../../domain';
 import { USER_REPOSITORY } from '../../user.token';
 
 export interface GetUserRequest {

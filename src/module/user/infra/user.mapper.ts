@@ -1,7 +1,5 @@
-import { Mapper } from '../../../shared/application/mapper';
-import { User } from '../domain/user';
-import { UserId } from '../domain/user-id';
-import { UserEmail } from '../domain/user-email';
+import { Mapper } from '@shared/application/mapper';
+import { User, UserId, UserEmail } from '../domain';
 
 export interface UserPersistence {
   id: string;
@@ -18,13 +16,10 @@ export class UserMapper extends Mapper<User> {
       throw new Error('Invalid email in persistence data');
     }
 
-    const now = new Date();
     const userOrError = User.create(
       {
         email: emailOrError.getValue(),
         name: raw.name,
-        createdAt: raw.createdAt || now,
-        updatedAt: raw.updatedAt || now,
       },
       UserId.create(raw.id),
     );
