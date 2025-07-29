@@ -1,11 +1,12 @@
-import { EventRoot } from '@shared/domain';
-import { User } from '../aggregate/user.aggregate';
+import type { EventRoot } from '@shared/domain/event';
+
+import type { UserAggregate } from '../aggregate/user.aggregate';
 
 export class UserCreatedEvent implements EventRoot {
   public occurredOn: Date;
-  public user: User;
+  public user: UserAggregate;
 
-  constructor(user: User) {
+  constructor(user: UserAggregate) {
     this.occurredOn = new Date();
     this.user = user;
   }

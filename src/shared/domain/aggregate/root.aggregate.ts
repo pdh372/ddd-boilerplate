@@ -1,5 +1,5 @@
 import { EntityRoot } from '../entity/root.entity';
-import { EventRoot } from '../event/event.root';
+import type { EventRoot } from '../event/event.root';
 
 export abstract class AggregateRoot<T> extends EntityRoot<T> {
   private _domainEvents: EventRoot[] = [];

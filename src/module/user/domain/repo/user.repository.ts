@@ -1,10 +1,9 @@
-import { User } from '../aggregate';
-import { UserId } from '../vo';
-import { UserEmail } from '../vo';
+import type { UserAggregate } from '../aggregate';
+import type { UserEmail, UserId } from '../vo';
 
-export interface UserRepository {
-  save(entity: User): Promise<User>;
-  findById(id: UserId): Promise<User | null>;
+export interface IUserRepository {
+  save(entity: UserAggregate): Promise<UserAggregate>;
+  findById(id: UserId): Promise<UserAggregate | null>;
   delete(id: string): Promise<void>;
-  findByEmail(email: UserEmail): Promise<User | null>;
+  findByEmail(email: UserEmail): Promise<UserAggregate | null>;
 }

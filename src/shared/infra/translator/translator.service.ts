@@ -1,29 +1,29 @@
+import { Injectable } from '@nestjs/common';
+import { LANGUAGE_VALUE } from '@shared/domain/constant';
 import {
-  TRANSLATOR_LANGUAGE,
-  TranslatorDomain,
+  TranslatorRepository,
   TranslatorInterpolateInput,
   TranslatorInput,
   TranslatorByLanguage,
-} from '@shared/domain/specification';
-import { Injectable } from '@nestjs/common';
+} from '@shared/domain/repository';
 
 @Injectable()
-export class TranslatorService implements TranslatorDomain {
+export class TranslatorService implements TranslatorRepository {
   private translations: TranslatorByLanguage = {
     vi: {},
     en: {},
   };
-  private defaultLanguage: ConstValue<typeof TRANSLATOR_LANGUAGE> = TRANSLATOR_LANGUAGE.EN;
+  private defaultLanguage: ConstValue<typeof LANGUAGE_VALUE> = LANGUAGE_VALUE.EN;
 
   constructor() {
     this.loadTranslations();
   }
 
   get language() {
-    return TRANSLATOR_LANGUAGE;
+    return LANGUAGE_VALUE;
   }
 
-  setLanguage(lang: ConstValue<typeof TRANSLATOR_LANGUAGE>): void {
+  setLanguage(lang: ConstValue<typeof LANGUAGE_VALUE>): void {
     this.defaultLanguage = lang;
   }
 
@@ -47,10 +47,8 @@ export class TranslatorService implements TranslatorDomain {
 
   private loadTranslations(): void {
     this.translations = {
-      [TRANSLATOR_LANGUAGE.EN]: {},
-      [TRANSLATOR_LANGUAGE.VI]: {},
+      [LANGUAGE_VALUE.EN]: {},
+      [LANGUAGE_VALUE.VI]: {},
     };
   }
 }
-
-export const TRANSLATOR_TOKEN = Symbol('TRANSLATOR_TOKEN');

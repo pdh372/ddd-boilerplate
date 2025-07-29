@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { TRANSLATOR_TOKEN, TranslatorService } from './translator.service';
+import { TranslatorService } from './translator.service';
+import { TRANSLATOR_REPOSITORY } from '@shared/domain/repository';
 
 @Module({
-  providers: [{ useClass: TranslatorService, provide: TRANSLATOR_TOKEN }],
-  exports: [TRANSLATOR_TOKEN],
+  providers: [{ useClass: TranslatorService, provide: TRANSLATOR_REPOSITORY }],
+  exports: [TRANSLATOR_REPOSITORY],
 })
 export class TranslatorModule {}

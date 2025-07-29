@@ -1,27 +1,28 @@
 import { Controller, Post, Get, Body, Param, HttpStatus, HttpException, Headers, Inject } from '@nestjs/common';
-import { TranslatorDomain, ExecutionContext } from '@shared/domain';
+import { ExecutionContextSpecification } from '@shared/domain/specification';
 import { CreateUserUseCase, GetUserUseCase } from './app/use-case';
 import { CreateUserDto } from './app/dto';
-import { TRANSLATOR_TOKEN } from '@shared/infra/translator';
+import { TRANSLATOR_REPOSITORY, TranslatorRepository } from '@shared/domain/repository';
+import { ILanguage } from '@shared/domain/constant';
 
 @Controller('users')
 export class UserController {
   constructor(
-    private readonly createUserUseCase: CreateUserUseCase,
-    private readonly getUserUseCase: GetUserUseCase,
-    @Inject(TRANSLATOR_TOKEN) private readonly _translatorService: TranslatorDomain,
+    private readonly _createUserUseCase: CreateUserUseCase,
+    private readonly _getUserUseCase: GetUserUseCase,
+    @Inject(TRANSLATOR_REPOSITORY) private readonly _translator: TranslatorRepository,
   ) {}
 
   @Post()
-  async createUser(@Body() createUserDto: CreateUserDto, @Headers('accept-language') acceptLanguage?: string) {
-    const context = ExecutionContext.create({
-      language: this.parseLanguage(acceptLanguage),
+  async createUser(@Body() createUserDto: CreateUserDto, @Headers('accept-language') acceptLanguage?: ILanguage) {
+    const context = ExecutionContextSpecification.create({
+      language: acceptLanguage,
     });
 
-    const result = await this.createUserUseCase.execute(createUserDto, context);
+    const result = await this._createUserUseCase.execute({ req: createUserDto, ctx: context });
 
     if (result.isFailure) {
-      const errorMessage = result.getError({ translator: this._translatorService, context });
+      const errorMessage = result.getError({ translator: this._translator, context });
       throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
     }
 
@@ -35,15 +36,15 @@ export class UserController {
   }
 
   @Get(':id')
-  async getUser(@Param('id') id: string, @Headers('accept-language') acceptLanguage?: string) {
-    const context = ExecutionContext.create({
-      language: this.parseLanguage(acceptLanguage),
+  async getUser(@Param('id') id: string, @Headers('accept-language') acceptLanguage?: ILanguage) {
+    const context = ExecutionContextSpecification.create({
+      language: acceptLanguage,
     });
 
-    const result = await this.getUserUseCase.execute({ userId: id }, context);
+    const result = await this._getUserUseCase.execute({ req: { userId: id }, ctx: context });
 
     if (result.isFailure) {
-      const errorMessage = result.getError({ translator: this._translatorService, context });
+      const errorMessage = result.getError({ translator: this._translator, context });
       throw new HttpException(errorMessage, HttpStatus.NOT_FOUND);
     }
 
@@ -55,18 +56,5 @@ export class UserController {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
-  }
-
-  private parseLanguage(acceptLanguage?: string): 'en' | 'vi' {
-    if (!acceptLanguage) return 'en';
-
-    const languages = acceptLanguage.split(',').map((lang) => lang.split(';')[0].trim());
-
-    for (const lang of languages) {
-      if (lang.startsWith('vi')) return 'vi';
-      if (lang.startsWith('en')) return 'en';
-    }
-
-    return 'en';
   }
 }

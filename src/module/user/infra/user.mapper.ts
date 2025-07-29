@@ -1,5 +1,6 @@
 import { Mapper } from '@shared/app/mapper';
-import { User, UserEmail } from '../domain';
+
+import { UserAggregate, UserEmail } from '../domain';
 
 export interface UserPersistence {
   id: string;
@@ -9,14 +10,14 @@ export interface UserPersistence {
   updatedAt: Date;
 }
 
-export class UserMapper extends Mapper<User> {
-  toDomain(raw: UserPersistence): User {
+export class UserMapper extends Mapper<UserAggregate> {
+  toDomain(raw: UserPersistence): UserAggregate {
     const emailOrError = UserEmail.create(raw.email);
     if (emailOrError.isFailure) {
       throw new Error('Invalid email in persistence data');
     }
 
-    const userOrError = User.create({
+    const userOrError = UserAggregate.create({
       email: emailOrError.getValue,
       name: raw.name,
     });
@@ -28,7 +29,7 @@ export class UserMapper extends Mapper<User> {
     return userOrError.getValue;
   }
 
-  toPersistence(user: User): UserPersistence {
+  toPersistence(user: UserAggregate): UserPersistence {
     return {
       id: user.id.value,
       email: user.email.value,

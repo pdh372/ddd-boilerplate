@@ -1,4 +1,4 @@
-import { ValueObjectRoot } from '@shared/domain';
+import { ValueObjectRoot } from '@shared/domain/vo';
 
 interface UserIdProps {
   value: string;
@@ -6,14 +6,18 @@ interface UserIdProps {
 
 export class UserId extends ValueObjectRoot<UserIdProps> {
   get value(): string {
-    return this.state.value;
+    return this.props.value;
   }
 
   private constructor(state: UserIdProps) {
     super(state);
   }
 
-  public static create(): UserId {
+  public static generate(): UserId {
     return new UserId({ value: Math.random().toString(36) });
+  }
+
+  public static fromValue(value: string): UserId {
+    return new UserId({ value });
   }
 }
