@@ -1,6 +1,6 @@
-import { User } from './user';
-import { UserId } from './user-id';
-import { UserEmail } from './user-email';
+import { User } from '../aggregate';
+import { UserId } from '../vo';
+import { UserEmail } from '../vo';
 
 export interface UserRepository {
   save(entity: User): Promise<User>;

@@ -1,5 +1,7 @@
-export * from './user';
-export * from './user-id';
-export * from './user-email';
-export * from './user.repository';
-export * from './event/user-created.event';
+export * from './aggregate';
+
+export * from './event';
+
+export * from './repo';
+
+export * from './vo';

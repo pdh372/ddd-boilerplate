@@ -1,5 +1,5 @@
-import { Mapper } from '@shared/application/mapper';
-import { User, UserId, UserEmail } from '../domain';
+import { Mapper } from '@shared/app/mapper';
+import { User, UserEmail } from '../domain';
 
 export interface UserPersistence {
   id: string;
@@ -16,19 +16,16 @@ export class UserMapper extends Mapper<User> {
       throw new Error('Invalid email in persistence data');
     }
 
-    const userOrError = User.create(
-      {
-        email: emailOrError.getValue(),
-        name: raw.name,
-      },
-      UserId.create(raw.id),
-    );
+    const userOrError = User.create({
+      email: emailOrError.getValue,
+      name: raw.name,
+    });
 
     if (userOrError.isFailure) {
       throw new Error('Failed to create user from persistence data');
     }
 
-    return userOrError.getValue();
+    return userOrError.getValue;
   }
 
   toPersistence(user: User): UserPersistence {

@@ -1,4 +1,4 @@
-export abstract class Entity<T> {
+export abstract class EntityRoot<T> {
   protected readonly _id: T;
 
   constructor(id: T) {
@@ -9,7 +9,7 @@ export abstract class Entity<T> {
     return this._id;
   }
 
-  public equals(object?: Entity<T>): boolean {
+  public equals(object?: EntityRoot<T>): boolean {
     if (object === null || object === undefined) {
       return false;
     }
@@ -18,7 +18,7 @@ export abstract class Entity<T> {
       return true;
     }
 
-    if (!(object instanceof Entity)) {
+    if (!(object instanceof EntityRoot)) {
       return false;
     }
 

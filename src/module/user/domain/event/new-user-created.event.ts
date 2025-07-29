@@ -1,7 +1,7 @@
-import { DomainEvent } from '@shared/domain/domain-event';
-import { User } from '../user';
+import { EventRoot } from '@shared/domain';
+import { User } from '../aggregate/user.aggregate';
 
-export class UserCreatedEvent implements DomainEvent {
+export class UserCreatedEvent implements EventRoot {
   public occurredOn: Date;
   public user: User;
 

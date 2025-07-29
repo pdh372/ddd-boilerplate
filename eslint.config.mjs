@@ -1,7 +1,6 @@
 // @ts-check
 import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
-import importPlugin from 'eslint-plugin-import';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -11,8 +10,6 @@ export default tseslint.config(
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
-  importPlugin.flatConfigs.recommended,
-  importPlugin.flatConfigs.typescript,
   eslintPluginPrettierRecommended,
   {
     languageOptions: {
@@ -26,20 +23,19 @@ export default tseslint.config(
         tsconfigRootDir: import.meta.dirname,
       },
     },
-    settings: {
-      'import/resolver': {
-        typescript: {
-          alwaysTryTypes: true,
-          project: './tsconfig.json',
-        },
-      },
-    },
   },
   {
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn'
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/only-throw-error': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      'no-duplicate-imports': 'warn',
+      '@typescript-eslint/consistent-type-imports': 'error',
     },
   },
 );

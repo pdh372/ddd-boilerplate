@@ -1,17 +1,18 @@
 import { Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { CreateUserUseCase, GetUserUseCase } from './app/use-case';
-import { InMemoryUserRepository } from './infra';
 import { USER_REPOSITORY } from './user.token';
+import { TranslatorInfra } from '@shared/infra';
 
 @Module({
+  imports: [TranslatorInfra],
   controllers: [UserController],
   providers: [
     CreateUserUseCase,
     GetUserUseCase,
     {
       provide: USER_REPOSITORY,
-      useClass: InMemoryUserRepository,
+      useValue: {},
     },
   ],
   exports: [USER_REPOSITORY],

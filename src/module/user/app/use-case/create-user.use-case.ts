@@ -1,41 +1,50 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { UseCase } from '@shared/application/use-case';
-import { Result } from '@shared/domain/result';
+import { UseCase } from '@shared/app/use-case';
+import { LocalizedResult, ExecutionContext, TranslatorDomain } from '@shared/domain';
 import { User, UserEmail, UserRepository } from '../../domain';
-import { CreateUserDto } from '../dto/create-user.dto';
+import { CreateUserDto } from '../dto';
 import { USER_REPOSITORY } from '../../user.token';
+import { TRANSLATOR_TOKEN } from '@shared/infra';
 
 @Injectable()
 export class CreateUserUseCase implements UseCase<CreateUserDto, User> {
   constructor(
-    @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
+    @Inject(USER_REPOSITORY) private readonly _userRepository: UserRepository,
+    @Inject(TRANSLATOR_TOKEN) private readonly _translatorService: TranslatorDomain,
   ) {}
 
-  async execute(request: CreateUserDto): Promise<Result<User>> {
-    const emailOrError = UserEmail.create(request.email);
-    if (emailOrError.isFailure) {
-      return Result.fail<User>(emailOrError.error!);
+  async execute(
+    request: CreateUserDto,
+    context: ExecutionContext = ExecutionContext.create({}),
+  ): Promise<LocalizedResult<User>> {
+    const email = UserEmail.create(request.email);
+    if (email.isFailure) {
+      return LocalizedResult.fail<User>({
+        errorKey: email.errorKey,
+        errorParam: email.errorParam,
+      });
     }
 
-    const existingUser = await this.userRepository.findByEmail(
-      emailOrError.getValue(),
-    );
+    const existingUser = await this._userRepository.findByEmail(email.getValue);
     if (existingUser) {
-      return Result.fail<User>('User already exists with this email');
+      return LocalizedResult.fail<User>({ errorKey: 'error.user.email_already_exists' });
     }
 
-    const userOrError = User.create({
-      email: emailOrError.getValue(),
+    const newUser = User.create({
+      email: email.getValue,
       name: request.name,
     });
 
-    if (userOrError.isFailure) {
-      return Result.fail<User>(userOrError.error!);
+    if (newUser.isFailure) {
+      return LocalizedResult.fail<User>({
+        errorKey: newUser.errorKey,
+        errorParam: newUser.errorParam,
+      });
     }
 
-    const user = userOrError.getValue();
-    await this.userRepository.save(user);
+    const user = newUser.getValue;
+    await this._userRepository.save(user);
 
-    return Result.ok<User>(user);
+    return LocalizedResult.ok<User>(user);
   }
 }

@@ -1,8 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { UseCase } from '@shared/application/use-case';
-import { Result } from '@shared/domain/result';
-import { User, UserId, UserRepository } from '../../domain';
+import { UseCase } from '@shared/app/use-case';
+import { LocalizedResult, TranslatorDomain, ExecutionContext } from '@shared/domain/specification';
+import { User, UserId, UserRepository } from '@module/user/domain';
 import { USER_REPOSITORY } from '../../user.token';
+import { TRANSLATOR_TOKEN } from '@shared/infra';
 
 export interface GetUserRequest {
   userId: string;
@@ -11,17 +12,21 @@ export interface GetUserRequest {
 @Injectable()
 export class GetUserUseCase implements UseCase<GetUserRequest, User> {
   constructor(
-    @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
+    @Inject(USER_REPOSITORY) private readonly _userRepository: UserRepository,
+    @Inject(TRANSLATOR_TOKEN) private readonly _translatorService: TranslatorDomain,
   ) {}
 
-  async execute(request: GetUserRequest): Promise<Result<User>> {
-    const userId = UserId.create(request.userId);
-    const user = await this.userRepository.findById(userId);
+  async execute(
+    request: GetUserRequest,
+    context: ExecutionContext = ExecutionContext.create({}),
+  ): Promise<LocalizedResult<User>> {
+    const userId = UserId.create();
+    const user = await this._userRepository.findById(userId);
 
     if (!user) {
-      return Result.fail<User>('User not found');
+      return LocalizedResult.fail<User>({ errorKey: 'error.user.not_found' });
     }
 
-    return Result.ok<User>(user);
+    return LocalizedResult.ok<User>(user);
   }
 }
