@@ -1,15 +1,16 @@
 import { Controller, Post, Get, Body, Param, HttpStatus, HttpException, Headers, Inject } from '@nestjs/common';
 import { ExecutionContextSpecification } from '@shared/domain/specification';
-import { CreateUserUseCase, GetUserUseCase } from './app/use-case';
-import { CreateUserDto } from './app/dto';
-import { TRANSLATOR_REPOSITORY, TranslatorRepository } from '@shared/domain/repository';
+import { CreateUserAdapter } from '../../module/user/infra/use-case-adapters/create-user-adapter.service';
+import { GetUserAdapter } from '../../module/user/infra/use-case-adapters/get-user-adapter.service';
+import { CreateUserDto } from '../../module/user/app/dto';
+import { TRANSLATOR_REPOSITORY, TranslatorRepository } from '@shared/domain/repo';
 import { ILanguage } from '@shared/domain/constant';
 
 @Controller('users')
 export class UserController {
   constructor(
-    private readonly _createUserUseCase: CreateUserUseCase,
-    private readonly _getUserUseCase: GetUserUseCase,
+    private readonly _createUserUseCase: CreateUserAdapter,
+    private readonly _getUserUseCase: GetUserAdapter,
     @Inject(TRANSLATOR_REPOSITORY) private readonly _translator: TranslatorRepository,
   ) {}
 

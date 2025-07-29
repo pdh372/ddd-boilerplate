@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import { ValueObjectRoot } from '@shared/domain/vo';
 
 interface UserIdProps {
@@ -14,7 +15,7 @@ export class UserId extends ValueObjectRoot<UserIdProps> {
   }
 
   public static generate(): UserId {
-    return new UserId({ value: Math.random().toString(36) });
+    return new UserId({ value: uuidv4() });
   }
 
   public static fromValue(value: string): UserId {

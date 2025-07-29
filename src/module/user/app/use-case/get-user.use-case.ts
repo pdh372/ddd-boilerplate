@@ -1,16 +1,14 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { UseCase } from '@shared/app/use-case';
-import { ExecutionContextSpecification, ResultSpecification } from '@shared/domain/specification';
-import { UserAggregate, UserId, IUserRepository } from '@module/user/domain';
-import { USER_REPOSITORY } from '../../user.token';
+import { type IUserRepository, type UserAggregate, UserId } from '@module/user/domain';
+
+import type { UseCase } from '@shared/app/use-case';
+import { type ExecutionContextSpecification, ResultSpecification } from '@shared/domain/specification';
 
 export interface IGetUserRequest {
   userId: string;
 }
 
-@Injectable()
 export class GetUserUseCase implements UseCase<IGetUserRequest, UserAggregate> {
-  constructor(@Inject(USER_REPOSITORY) private readonly _userRepository: IUserRepository) {}
+  constructor(private readonly _userRepository: IUserRepository) {}
 
   async execute(input: {
     req: IGetUserRequest;

@@ -1,4 +1,4 @@
-import type { TranslatorRepository } from '../repository/translator.repository';
+import type { TranslatorRepository } from '../repo/translator.repository';
 import type { ExecutionContextSpecification } from './execution-context.specification';
 
 type ResultState = {

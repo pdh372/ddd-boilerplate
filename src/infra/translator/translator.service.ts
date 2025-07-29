@@ -5,7 +5,7 @@ import {
   TranslatorInterpolateInput,
   TranslatorInput,
   TranslatorByLanguage,
-} from '@shared/domain/repository';
+} from '@shared/domain/repo';
 
 @Injectable()
 export class TranslatorService implements TranslatorRepository {
