@@ -1,7 +1,7 @@
 import { type IUserRepository, UserAggregate, UserEmail } from '@module/user/domain';
 
 import type { UseCase } from '@shared/app/use-case';
-import type { TranslatorRepository } from '@shared/domain/repo';
+import type { ITranslatorRepository } from '@shared/domain/repo';
 import { type ExecutionContextSpecification, ResultSpecification } from '@shared/domain/specification';
 
 import type { CreateUserDto } from '../dto';
@@ -9,7 +9,7 @@ import type { CreateUserDto } from '../dto';
 export class CreateUserUseCase implements UseCase<CreateUserDto, UserAggregate> {
   constructor(
     private readonly _userRepository: IUserRepository,
-    private readonly _translatorRepository: TranslatorRepository,
+    private readonly _translatorRepository: ITranslatorRepository,
   ) {}
 
   async execute(input: {

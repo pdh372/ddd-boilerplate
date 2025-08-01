@@ -1,17 +1,18 @@
 import { Controller, Post, Get, Body, Param, HttpStatus, HttpException, Headers, Inject } from '@nestjs/common';
 import { ExecutionContextSpecification } from '@shared/domain/specification';
-import { CreateUserAdapter } from '../../module/user/infra/use-case-adapters/create-user-adapter.service';
-import { GetUserAdapter } from '../../module/user/infra/use-case-adapters/get-user-adapter.service';
+import { CreateUserUseCase } from '../../module/user/app/use-case/create-user.use-case';
+import { GetUserUseCase } from '../../module/user/app/use-case/get-user.use-case';
 import { CreateUserDto } from '../../module/user/app/dto';
-import { TRANSLATOR_REPOSITORY, TranslatorRepository } from '@shared/domain/repo';
+import { ITranslatorRepository } from '@shared/domain/repo';
 import { ILanguage } from '@shared/domain/constant';
+import { TRANSLATOR_REPOSITORY } from '../../infra/translator/translator.token';
 
 @Controller('users')
 export class UserController {
   constructor(
-    private readonly _createUserUseCase: CreateUserAdapter,
-    private readonly _getUserUseCase: GetUserAdapter,
-    @Inject(TRANSLATOR_REPOSITORY) private readonly _translator: TranslatorRepository,
+    private readonly _createUserUseCase: CreateUserUseCase,
+    private readonly _getUserUseCase: GetUserUseCase,
+    @Inject(TRANSLATOR_REPOSITORY) private readonly _translator: ITranslatorRepository,
   ) {}
 
   @Post()

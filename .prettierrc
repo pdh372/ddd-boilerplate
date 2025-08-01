@@ -6,9 +6,5 @@
   "semi": true,
   "arrowParens": "always",
   "proseWrap": "never",
-  "endOfLine": "lf",
-  "plugins": ["@trivago/prettier-plugin-sort-imports"],
-  "importOrder": ["^@module,/(.*)$", "^@shared/(.*)$", "^[./]"],
-  "importOrderSeparation": true,
-  "importOrderSortSpecifiers": true
+  "endOfLine": "lf"
 }

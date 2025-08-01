@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { LANGUAGE_VALUE } from '@shared/domain/constant';
 import {
-  TranslatorRepository,
-  TranslatorInterpolateInput,
-  TranslatorInput,
-  TranslatorByLanguage,
+  ITranslatorRepository,
+  ITranslatorInterpolateInput,
+  ITranslatorInput,
+  ITranslatorByLanguage,
 } from '@shared/domain/repo';
 
 @Injectable()
-export class TranslatorService implements TranslatorRepository {
-  private translations: TranslatorByLanguage = {
+export class TranslatorService implements ITranslatorRepository {
+  private translations: ITranslatorByLanguage = {
     vi: {},
     en: {},
   };
@@ -27,7 +27,7 @@ export class TranslatorService implements TranslatorRepository {
     this.defaultLanguage = lang;
   }
 
-  translate(input: TranslatorInput): string {
+  translate(input: ITranslatorInput): string {
     const language = input.lang || this.defaultLanguage;
 
     const translation = this.translations[language][input.key];
@@ -39,7 +39,7 @@ export class TranslatorService implements TranslatorRepository {
     return translation;
   }
 
-  private interpolate(template: string, params: TranslatorInterpolateInput): string {
+  private interpolate(template: string, params: ITranslatorInterpolateInput): string {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) => {
       return params[key]?.toString() || match;
     });

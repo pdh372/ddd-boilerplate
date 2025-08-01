@@ -1,4 +1,4 @@
-import type { TranslatorRepository } from '../repo/translator.repository';
+import type { ITranslatorRepository } from '../repo/translator.repository';
 import type { ExecutionContextSpecification } from './execution-context.specification';
 
 type ResultState = {
@@ -46,7 +46,7 @@ export class ResultSpecification<T> {
     return this._value as T;
   }
 
-  public getError(input: { translator: TranslatorRepository; context: ExecutionContextSpecification }): string {
+  public getError(input: { translator: ITranslatorRepository; context: ExecutionContextSpecification }): string {
     if (!this._state.errorKey) {
       return '';
     }

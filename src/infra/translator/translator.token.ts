@@ -1,0 +1,1 @@
+export const TRANSLATOR_REPOSITORY = Symbol('TRANSLATOR_TOKEN');
