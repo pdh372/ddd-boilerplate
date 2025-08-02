@@ -13,6 +13,7 @@ export class UserController {
   @Post()
   async createUser(@Body() body: CreateUserDto, @AcceptLanguage() acceptLanguage: IAcceptLanguageContext) {
     const result = await this._createUserUseCase.execute(body);
+    console.log('🚀 ~ UserController ~ createUser ~ result:', result);
 
     if (result.isFailure) {
       const errorMessage = result.getError();

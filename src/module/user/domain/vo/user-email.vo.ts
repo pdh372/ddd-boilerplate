@@ -1,5 +1,6 @@
 import { ResultSpecification } from '@shared/domain/specification';
 import { ValueObjectRoot } from '@shared/domain/vo';
+import { TRANSLATOR_KEY } from '@shared/translator';
 
 interface IUserEmailProps {
   value: string;
@@ -16,7 +17,7 @@ export class UserEmail extends ValueObjectRoot<IUserEmailProps> {
 
   public static create(email: string): ResultSpecification<UserEmail> {
     if (!this.isValidEmail(email)) {
-      return ResultSpecification.fail<UserEmail>({ errorKey: 'error.user.invalid_email' });
+      return ResultSpecification.fail<UserEmail>({ errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL });
     }
 
     return ResultSpecification.ok<UserEmail>(new UserEmail({ value: email }));

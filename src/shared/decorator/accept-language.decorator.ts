@@ -1,6 +1,5 @@
 import { type ExecutionContext, createParamDecorator } from '@nestjs/common';
-import { TranslatorService } from '@infra/translator/translator.service';
-import { type ITranslatorInput } from '@module/translator/domain/repo/translator.repo';
+import { type ITranslatorInput, TranslatorService } from '@shared/translator/translator.service';
 
 export type IAcceptLanguageContext = (input: ITranslatorInput) => string;
 

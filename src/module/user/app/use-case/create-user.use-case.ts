@@ -1,9 +1,8 @@
 import { type IUserRepository, UserAggregate, UserEmail, UserName } from '@module/user/domain';
-
 import type { UseCase } from '@shared/app/use-case';
 import { ResultSpecification } from '@shared/domain/specification';
-
 import type { ICreateUserDto } from '../dto';
+import { TRANSLATOR_KEY } from '@shared/translator';
 
 export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate> {
   constructor(private readonly _userRepository: IUserRepository) {}
@@ -27,7 +26,7 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
 
     const existingUser = await this._userRepository.findByEmail(email.getValue);
     if (existingUser) {
-      return ResultSpecification.fail<UserAggregate>({ errorKey: 'error.user.email_already_exists' });
+      return ResultSpecification.fail<UserAggregate>({ errorKey: TRANSLATOR_KEY.ERROR__USER__EMAIL_ALREADY_EXISTS });
     }
 
     const newUser = UserAggregate.create({
