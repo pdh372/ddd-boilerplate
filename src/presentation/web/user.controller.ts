@@ -24,11 +24,13 @@ export class UserController {
     }
 
     const user = result.getValue;
+
     return {
-      id: user.id.value,
-      email: user.email.value,
-      name: user.name,
-      createdAt: user.createdAt,
+      id: user.props.id.value,
+      email: user.props.email.value,
+      name: user.props.name.value,
+      createdAt: user.props.createdAt,
+      updatedAt: user.props.updatedAt,
     };
   }
 
@@ -47,11 +49,11 @@ export class UserController {
     const user = result.getValue;
 
     return {
-      id: user.id.value,
-      email: user.email.value,
-      name: user.name.value,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      id: user.props.id.value,
+      email: user.props.email.value,
+      name: user.props.name.value,
+      createdAt: user.props.createdAt,
+      updatedAt: user.props.updatedAt,
     };
   }
 }

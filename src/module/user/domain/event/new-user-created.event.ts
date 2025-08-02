@@ -12,6 +12,6 @@ export class UserCreatedEvent implements EventRoot {
   }
 
   getAggregateId(): string {
-    return this.user.id.value;
+    return this.user.props.id.value;
   }
 }

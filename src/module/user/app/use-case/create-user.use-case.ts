@@ -33,10 +33,8 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
       email: email.getValue,
       name: name.getValue,
     });
+    const userSaved = await this._userRepository.save(newUser.getValue);
 
-    const user = newUser.getValue;
-    await this._userRepository.save(user);
-
-    return ResultSpecification.ok<UserAggregate>(user);
+    return ResultSpecification.ok<UserAggregate>(userSaved);
   }
 }

@@ -5,10 +5,6 @@ export abstract class EntityRoot<T> {
     this._id = id;
   }
 
-  public get id(): T {
-    return this._id;
-  }
-
   public equals(object?: EntityRoot<T>): boolean {
     if (object === null || object === undefined) {
       return false;

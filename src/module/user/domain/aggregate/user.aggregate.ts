@@ -4,7 +4,7 @@ import { ResultSpecification } from '@shared/domain/specification';
 import { UserCreatedEvent } from '../event';
 import { type UserEmail, type UserName, UserId } from '../vo';
 
-interface IUserState {
+interface IUserProps {
   id: UserId;
   email: UserEmail;
   name: UserName;
@@ -13,34 +13,22 @@ interface IUserState {
 }
 
 export class UserAggregate extends AggregateRoot<UserId> {
-  private state: IUserState;
+  private _props: IUserProps;
 
-  get email(): UserEmail {
-    return this.state.email;
+  get props(): IUserProps {
+    return this._props;
   }
 
-  get name(): UserName {
-    return this.state.name;
-  }
-
-  get createdAt(): Date {
-    return this.state.createdAt;
-  }
-
-  get updatedAt(): Date {
-    return this.state.updatedAt;
-  }
-
-  private constructor(props: IUserState) {
+  private constructor(props: IUserProps) {
     super(props.id);
-    this.state = props;
+    this._props = props;
   }
 
-  public static create(props: Omit<IUserState, 'createdAt' | 'updatedAt' | 'id'>): ResultSpecification<UserAggregate> {
+  public static create(props: Omit<IUserProps, 'createdAt' | 'updatedAt' | 'id'>): ResultSpecification<UserAggregate> {
     const now = new Date();
     const userId = UserId.generate();
 
-    const userProps: IUserState = {
+    const userProps: IUserProps = {
       ...props,
       createdAt: now,
       updatedAt: now,
@@ -54,12 +42,12 @@ export class UserAggregate extends AggregateRoot<UserId> {
     return ResultSpecification.ok<UserAggregate>(user);
   }
 
-  public static fromValue(state: IUserState): UserAggregate {
+  public static fromValue(state: IUserProps): UserAggregate {
     return new UserAggregate(state);
   }
 
   public updateName(name: UserName): void {
-    this.state.name = name;
-    this.state.updatedAt = new Date();
+    this._props.name = name;
+    this._props.updatedAt = new Date();
   }
 }

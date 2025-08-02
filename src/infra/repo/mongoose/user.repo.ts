@@ -31,17 +31,17 @@ export class UserMongooseRepository implements IUserRepository {
     private readonly userModel: Model<UserDocument>,
   ) {}
 
-  async save(entity: UserAggregate): Promise<UserAggregate> {
+  async save(userAggregate: UserAggregate): Promise<UserAggregate> {
     const userDoc = {
-      email: entity.email.value,
-      name: entity.name,
-      createdAt: entity.createdAt,
-      updatedAt: entity.updatedAt,
+      email: userAggregate.props.email.value,
+      name: userAggregate.props.name.value,
+      createdAt: userAggregate.props.createdAt,
+      updatedAt: userAggregate.props.updatedAt,
     };
 
-    await this.userModel.create(userDoc);
+    const newDoc = await this.userModel.create(userDoc);
 
-    return entity;
+    return this.toDomain(newDoc);
   }
 
   async findById(id: UserId): Promise<UserAggregate | null> {
