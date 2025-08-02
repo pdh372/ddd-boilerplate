@@ -40,6 +40,10 @@ export const TRANSLATOR_MESSAGE: Record<
     [LANGUAGE_TYPE.EN]: 'Invalid order status transition',
     [LANGUAGE_TYPE.VI]: 'Không thể chuyển trạng thái đơn hàng',
   },
+  [TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND]: {
+    [LANGUAGE_TYPE.EN]: 'Order not found',
+    [LANGUAGE_TYPE.VI]: 'Không tìm thấy đơn hàng',
+  },
   [TRANSLATOR_KEY.ERROR__COMMON__INVALID_ID]: {
     [LANGUAGE_TYPE.EN]: 'Invalid user ID',
     [LANGUAGE_TYPE.VI]: 'ID người dùng không hợp lệ',

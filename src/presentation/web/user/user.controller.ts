@@ -2,7 +2,7 @@ import { Controller, Post, Get, Body, Param, HttpException } from '@nestjs/commo
 import { CreateUserUseCase, GetUserUseCase } from '@module/user/app/use-case';
 import { AcceptLanguage, IAcceptLanguageContext } from '@shared/decorator';
 import { CreateUserDto } from './dto';
-import { ERROR_STATUS_CODE } from '../../shared/translator';
+import { ERROR_STATUS_CODE } from '@shared/translator';
 
 @Controller('user')
 export class UserController {

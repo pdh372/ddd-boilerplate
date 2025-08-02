@@ -14,6 +14,7 @@ export const TRANSLATOR_KEY = {
   ERROR__ORDER__CANNOT_REMOVE_LAST_ITEM: 'error.order.cannot_remove_last_item',
   ERROR__ORDER__EMPTY_ORDER: 'error.order.empty_order',
   ERROR__ORDER__INVALID_STATUS_TRANSITION: 'error.order.invalid_status_transition',
+  ERROR__ORDER__NOT_FOUND: 'error.order.not_found',
 
   ERROR__COMMON__INVALID_ID: 'error.common.invalid_id',
 } as const;
