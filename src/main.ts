@@ -4,7 +4,9 @@ import { AppModule } from './presentation/presentation.module';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { logger: ['debug', 'error', 'fatal', 'verbose', 'warn'] });
+  const app = await NestFactory.create(AppModule, {
+    logger: ['debug', 'error', 'fatal', 'verbose', 'warn'], //
+  });
 
   const port = process.env.PORT || 3001;
 

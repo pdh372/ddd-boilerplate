@@ -13,7 +13,6 @@ export class UserController {
   @Post()
   async createUser(@Body() body: CreateUserDto, @AcceptLanguage() acceptLanguage: IAcceptLanguageContext) {
     const result = await this._createUserUseCase.execute(body);
-    console.log('🚀 ~ UserController ~ createUser ~ result:', result);
 
     if (result.isFailure) {
       const errorMessage = result.getError();
@@ -42,10 +41,11 @@ export class UserController {
     }
 
     const user = result.getValue;
+
     return {
       id: user.id.value,
       email: user.email.value,
-      name: user.name,
+      name: user.name.value,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

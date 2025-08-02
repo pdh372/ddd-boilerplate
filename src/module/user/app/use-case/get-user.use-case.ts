@@ -12,7 +12,16 @@ export class GetUserUseCase implements UseCase<IGetUserRequest, UserAggregate> {
   constructor(private readonly _userRepository: IUserRepository) {}
 
   async execute(input: IGetUserRequest): Promise<ResultSpecification<UserAggregate>> {
-    const user = await this._userRepository.findById(UserId.fromValue(input.userId));
+    const userId = UserId.create(input.userId);
+    if (userId.isFailure) {
+      const errorMessage = userId.getError();
+      return ResultSpecification.fail<UserAggregate>({
+        errorKey: errorMessage.errorKey,
+        errorParam: errorMessage.errorParam,
+      });
+    }
+
+    const user = await this._userRepository.findById(userId.getValue);
 
     if (!user) {
       return ResultSpecification.fail<UserAggregate>({ errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND });

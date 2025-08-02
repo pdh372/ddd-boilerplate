@@ -1,5 +1,5 @@
 type ExecutionContextState = {
-  language: string;
+  language?: string;
   userId?: string;
   requestId?: string;
 };
@@ -18,7 +18,7 @@ export class ExecutionContextSpecification {
     userId,
     requestId,
   }: {
-    language: string;
+    language?: string;
     userId?: string;
     requestId?: string;
   }): ExecutionContextSpecification {

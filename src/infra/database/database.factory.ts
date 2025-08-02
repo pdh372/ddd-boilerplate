@@ -1,6 +1,5 @@
 import { Global, Module } from '@nestjs/common';
 import { MongooseDatabaseModule } from './mongoose.config';
-// import { TypeOrmDatabaseModule } from './typeorm.config';
 
 @Global()
 @Module({

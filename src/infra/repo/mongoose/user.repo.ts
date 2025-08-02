@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel, Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { InjectModel, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Model } from 'mongoose';
 import { type IUserRepository, UserAggregate } from '@module/user/domain';
 import { UserEmail, UserId } from '@module/user/domain/vo';
