@@ -1,6 +1,3 @@
-import type { ITranslatorRepository } from '../repo/translator.repository';
-import type { ExecutionContextSpecification } from './execution-context.specification';
-
 type ResultState = {
   isSuccess: boolean;
   isFailure: boolean;
@@ -46,16 +43,15 @@ export class ResultSpecification<T> {
     return this._value as T;
   }
 
-  public getError(input: { translator: ITranslatorRepository; context: ExecutionContextSpecification }): string {
+  public getError(): Pick<ResultState, 'errorKey' | 'errorParam'> {
     if (!this._state.errorKey) {
-      return '';
+      throw new Error('error.result.cannot_get_error');
     }
 
-    return input.translator.translate({
-      key: this._state.errorKey,
-      param: this._state.errorParam,
-      lang: input.context.language,
-    });
+    return {
+      errorKey: this._state.errorKey,
+      errorParam: this._state.errorParam,
+    };
   }
 
   public static ok<U>(value?: U): ResultSpecification<U> {

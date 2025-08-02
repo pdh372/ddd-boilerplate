@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { InjectModel, Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Model } from 'mongoose';
-import type { IUserRepository, UserAggregate } from '@module/user/domain';
-import type { UserEmail, UserId } from '@module/user/domain/vo';
+import { type IUserRepository, UserAggregate } from '@module/user/domain';
+import { UserEmail, UserId } from '@module/user/domain/vo';
+import { UserName } from '../../../module/user/domain';
 
 @Schema({ collection: 'users' })
 export class UserDocument extends Document {
@@ -32,14 +33,13 @@ export class UserMongooseRepository implements IUserRepository {
 
   async save(entity: UserAggregate): Promise<UserAggregate> {
     const userDoc = {
-      _id: entity.id.value,
       email: entity.email.value,
       name: entity.name,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };
 
-    await this.userModel.findByIdAndUpdate(entity.id.value, userDoc, { upsert: true, new: true });
+    await this.userModel.create(userDoc);
 
     return entity;
   }
@@ -51,9 +51,7 @@ export class UserMongooseRepository implements IUserRepository {
       return null;
     }
 
-    // Convert back to domain aggregate (you'll need a factory method)
-    // This is simplified - you'd normally use a mapper
-    return null; // TODO: Implement proper domain reconstruction
+    return this.toDomain(userDoc);
   }
 
   async delete(id: string): Promise<void> {
@@ -67,7 +65,22 @@ export class UserMongooseRepository implements IUserRepository {
       return null;
     }
 
-    // Convert back to domain aggregate
-    return null; // TODO: Implement proper domain reconstruction
+    return this.toDomain(userDoc);
+  }
+
+  private toDomain(userDoc: UserDocument): UserAggregate {
+    const userId = UserId.fromValue(userDoc._id.toString());
+    const userEmail = UserEmail.fromValue(userDoc.email);
+    const userName = UserName.fromValue(userDoc.name);
+
+    const user = UserAggregate.fromValue({
+      id: userId,
+      email: userEmail,
+      name: userName,
+      createdAt: userDoc.createdAt,
+      updatedAt: userDoc.updatedAt,
+    });
+
+    return user;
   }
 }

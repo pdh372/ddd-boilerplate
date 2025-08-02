@@ -1,6 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import { ValueObjectRoot } from '@shared/domain/vo';
+import { Types } from 'mongoose';
+import { ResultSpecification } from '@shared/domain/specification';
 
 interface UserIdProps {
   value: string;
@@ -15,8 +15,8 @@ export class UserId extends ValueObjectRoot<UserIdProps> {
     super(state);
   }
 
-  public static generate(): UserId {
-    return new UserId({ value: uuidv4() });
+  public static generate(): ResultSpecification<UserId> {
+    return ResultSpecification.ok(new UserId({ value: new Types.ObjectId()._id.toString() }));
   }
 
   public static fromValue(value: string): UserId {

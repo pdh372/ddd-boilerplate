@@ -1,6 +1,6 @@
 import { Mapper } from '@shared/app/mapper';
 
-import { UserAggregate, UserEmail } from '../domain';
+import { UserAggregate, UserEmail, UserName } from '../domain';
 
 export interface UserPersistence {
   id: string;
@@ -19,7 +19,7 @@ export class UserMapper extends Mapper<UserAggregate> {
 
     const userOrError = UserAggregate.create({
       email: emailOrError.getValue,
-      name: raw.name,
+      name: UserName.fromValue(raw.name),
     });
 
     if (userOrError.isFailure) {
@@ -33,7 +33,7 @@ export class UserMapper extends Mapper<UserAggregate> {
     return {
       id: user.id.value,
       email: user.email.value,
-      name: user.name,
+      name: user.name.value,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

@@ -1,3 +1,5 @@
+import { ResultSpecification } from '../specification';
+
 export abstract class ValueObjectRoot<T> {
   protected readonly props: T;
 

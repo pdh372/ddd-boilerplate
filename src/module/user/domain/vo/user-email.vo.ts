@@ -22,6 +22,10 @@ export class UserEmail extends ValueObjectRoot<IUserEmailProps> {
     return ResultSpecification.ok<UserEmail>(new UserEmail({ value: email }));
   }
 
+  public static fromValue(email: string): UserEmail {
+    return new UserEmail({ value: email });
+  }
+
   private static isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);

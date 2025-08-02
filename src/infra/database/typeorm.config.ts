@@ -9,9 +9,9 @@ import { USER_REPOSITORY } from '@module/user/user.token';
       type: 'postgres', // or your preferred database
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT ?? '') || 5432,
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'password',
-      database: process.env.DB_NAME || 'ddd_app',
+      username: process.env.DB_USERNAME || 'huypd',
+      password: process.env.DB_PASSWORD || 'huypd',
+      database: process.env.DB_NAME || 'huypd',
       entities: [UserEntity],
       synchronize: process.env.NODE_ENV !== 'production',
     }),

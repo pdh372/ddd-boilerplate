@@ -2,12 +2,12 @@ import { AggregateRoot } from '@shared/domain/aggregate';
 import { ResultSpecification } from '@shared/domain/specification';
 
 import { UserCreatedEvent } from '../event';
-import { type UserEmail, UserId } from '../vo';
+import { type UserEmail, type UserName, UserId } from '../vo';
 
 interface IUserState {
+  id: UserId;
   email: UserEmail;
-
-  name: string;
+  name: UserName;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,7 +19,7 @@ export class UserAggregate extends AggregateRoot<UserId> {
     return this.state.email;
   }
 
-  get name(): string {
+  get name(): UserName {
     return this.state.name;
   }
 
@@ -31,28 +31,34 @@ export class UserAggregate extends AggregateRoot<UserId> {
     return this.state.updatedAt;
   }
 
-  private constructor(props: IUserState, id: UserId) {
-    super(id);
+  private constructor(props: IUserState) {
+    super(props.id);
     this.state = props;
   }
 
-  public static create(props: Omit<IUserState, 'createdAt' | 'updatedAt'>): ResultSpecification<UserAggregate> {
+  public static create(props: Omit<IUserState, 'createdAt' | 'updatedAt' | 'id'>): ResultSpecification<UserAggregate> {
     const now = new Date();
+    const userId = UserId.generate();
+
     const userProps: IUserState = {
       ...props,
       createdAt: now,
       updatedAt: now,
+      id: userId.getValue,
     };
 
-    const userId = UserId.generate();
-    const user = new UserAggregate(userProps, userId);
+    const user = new UserAggregate(userProps);
 
     user.addDomainEvent(new UserCreatedEvent(user));
 
     return ResultSpecification.ok<UserAggregate>(user);
   }
 
-  public updateName(name: string): void {
+  public static fromValue(state: IUserState): UserAggregate {
+    return new UserAggregate(state);
+  }
+
+  public updateName(name: UserName): void {
     this.state.name = name;
     this.state.updatedAt = new Date();
   }

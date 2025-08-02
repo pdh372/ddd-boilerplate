@@ -35,7 +35,7 @@ export class UserTypeOrmRepository implements IUserRepository {
     const userEntity = new UserEntity();
     userEntity.id = entity.id.value;
     userEntity.email = entity.email.value;
-    userEntity.name = entity.name;
+    userEntity.name = entity.name.value;
     userEntity.createdAt = entity.createdAt;
     userEntity.updatedAt = entity.updatedAt;
 

@@ -1,7 +1,5 @@
-import { type ILanguage, LANGUAGE_VALUE } from '../constant';
-
 type ExecutionContextState = {
-  language: ConstValue<typeof LANGUAGE_VALUE>;
+  language: string;
   userId?: string;
   requestId?: string;
 };
@@ -16,26 +14,18 @@ export class ExecutionContextSpecification {
   }
 
   static create({
-    language = LANGUAGE_VALUE.EN,
+    language,
     userId,
     requestId,
   }: {
-    language?: ConstValue<typeof LANGUAGE_VALUE>;
+    language: string;
     userId?: string;
     requestId?: string;
   }): ExecutionContextSpecification {
-    return new ExecutionContextSpecification({ language: this.parseLanguage(language), userId, requestId });
+    return new ExecutionContextSpecification({ language, userId, requestId });
   }
 
   get language() {
     return this._state.language;
-  }
-
-  private static parseLanguage(acceptLanguage?: string): ILanguage {
-    if (!acceptLanguage) return LANGUAGE_VALUE.EN;
-
-    const lang = Object.values(LANGUAGE_VALUE).find((validLanguage) => validLanguage === acceptLanguage);
-
-    return lang ?? LANGUAGE_VALUE.EN;
   }
 }

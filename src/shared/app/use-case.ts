@@ -1,5 +1,5 @@
-import type { ExecutionContextSpecification, ResultSpecification } from '@shared/domain/specification';
+import type { ResultSpecification } from '@shared/domain/specification';
 
 export interface UseCase<IRequest, IResponse> {
-  execute(input: { req: IRequest; ctx: ExecutionContextSpecification }): Promise<ResultSpecification<IResponse>>;
+  execute(input: IRequest): Promise<ResultSpecification<IResponse>>;
 }

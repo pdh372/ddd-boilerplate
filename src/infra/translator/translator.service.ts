@@ -1,36 +1,46 @@
 import { Injectable } from '@nestjs/common';
-import { LANGUAGE_VALUE } from '@shared/domain/constant';
 import {
-  ITranslatorRepository,
-  ITranslatorInterpolateInput,
-  ITranslatorInput,
   ITranslatorByLanguage,
-} from '@shared/domain/repo';
+  ITranslatorInput,
+  ITranslatorInterpolateInput,
+  ITranslatorRepository,
+} from '../../module/translator/domain/repo/translator.repo';
 
 @Injectable()
 export class TranslatorService implements ITranslatorRepository {
-  private translations: ITranslatorByLanguage = {
-    vi: {},
-    en: {},
+  private readonly _LANGUAGE_TYPE = {
+    VI: 'vi',
+    EN: 'en',
   };
-  private defaultLanguage: ConstValue<typeof LANGUAGE_VALUE> = LANGUAGE_VALUE.EN;
+
+  private _translation: ITranslatorByLanguage = {};
+  private _currentLanguage: string;
 
   constructor() {
+    this._currentLanguage = this._LANGUAGE_TYPE.EN;
     this.loadTranslations();
   }
 
-  get language() {
-    return LANGUAGE_VALUE;
+  get currentLanguage() {
+    return this._currentLanguage;
   }
 
-  setLanguage(lang: ConstValue<typeof LANGUAGE_VALUE>): void {
-    this.defaultLanguage = lang;
+  setLanguage(lang: string = ''): void {
+    if (!Object.values(this._LANGUAGE_TYPE).includes(lang)) {
+      this._currentLanguage = this._LANGUAGE_TYPE.EN;
+      return;
+    }
+
+    this._currentLanguage = lang;
   }
 
   translate(input: ITranslatorInput): string {
-    const language = input.lang || this.defaultLanguage;
+    const language = this._currentLanguage;
+    const translation = this._translation[input.key][language];
 
-    const translation = this.translations[language][input.key];
+    if (!translation) {
+      throw new Error(`Translation for key "${input.key}" not found in language "${language}"`);
+    }
 
     if (input.param) {
       return this.interpolate(translation, input.param);
@@ -46,9 +56,19 @@ export class TranslatorService implements ITranslatorRepository {
   }
 
   private loadTranslations(): void {
-    this.translations = {
-      [LANGUAGE_VALUE.EN]: {},
-      [LANGUAGE_VALUE.VI]: {},
+    this._translation = {
+      'error.user.email_already_exists': {
+        [this._LANGUAGE_TYPE.EN]: 'Email already exists',
+        [this._LANGUAGE_TYPE.VI]: 'Email đã tồn tại',
+      },
+      'error.user.not_found': {
+        [this._LANGUAGE_TYPE.EN]: 'User not found {{name}}',
+        [this._LANGUAGE_TYPE.VI]: 'Không tìm thấy người dùng {{name}}',
+      },
+      'error.user.invalid_email': {
+        [this._LANGUAGE_TYPE.EN]: 'Invalid email format',
+        [this._LANGUAGE_TYPE.VI]: 'Định dạng email không hợp lệ',
+      },
     };
   }
 }

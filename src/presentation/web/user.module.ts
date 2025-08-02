@@ -1,32 +1,10 @@
 import { Module } from '@nestjs/common';
 import { UserController } from './user.controller';
-import { CreateUserUseCase } from '../../module/user/app/use-case/create-user.use-case';
-import { GetUserUseCase } from '../../module/user/app/use-case/get-user.use-case';
-import { TranslatorInfra } from '@infra/translator';
-import { DatabaseInfra } from '@infra/database/database.factory';
-import { USER_REPOSITORY } from '../../module/user/user.token';
-import { ITranslatorRepository } from '@shared/domain/repo';
-import { IUserRepository } from '@module/user/domain';
-import { TRANSLATOR_REPOSITORY } from '../../infra/translator/translator.token';
+import { USE_CASE } from '@infra/use-case';
 
 @Module({
-  imports: [TranslatorInfra, DatabaseInfra],
+  imports: [],
   controllers: [UserController],
-  providers: [
-    {
-      provide: CreateUserUseCase,
-      inject: [USER_REPOSITORY, TRANSLATOR_REPOSITORY],
-      useFactory: (userRepo: IUserRepository, translator: ITranslatorRepository) => {
-        return new CreateUserUseCase(userRepo, translator);
-      },
-    },
-    {
-      provide: GetUserUseCase,
-      inject: [USER_REPOSITORY],
-      useFactory: (userRepo: IUserRepository) => {
-        return new GetUserUseCase(userRepo);
-      },
-    },
-  ],
+  providers: [USE_CASE.USER.CREATE_USER, USE_CASE.USER.GET_USER],
 })
 export class UserModule {}

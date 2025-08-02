@@ -1,11 +1,10 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmDatabaseModule } from './typeorm.config';
+import { Global, Module } from '@nestjs/common';
 import { MongooseDatabaseModule } from './mongoose.config';
+// import { TypeOrmDatabaseModule } from './typeorm.config';
 
-const DATABASE_TYPE = process.env.DATABASE_TYPE || 'mongoose';
-
+@Global()
 @Module({
-  imports: [DATABASE_TYPE === 'mongoose' ? MongooseDatabaseModule : TypeOrmDatabaseModule],
-  exports: [DATABASE_TYPE === 'mongoose' ? MongooseDatabaseModule : TypeOrmDatabaseModule],
+  imports: [MongooseDatabaseModule],
+  exports: [MongooseDatabaseModule],
 })
 export class DatabaseInfra {}
