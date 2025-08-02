@@ -1,7 +1,8 @@
-import { Controller, Post, Get, Body, Param, HttpStatus, HttpException } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, HttpException } from '@nestjs/common';
 import { CreateUserUseCase, GetUserUseCase } from '@module/user/app/use-case';
 import { AcceptLanguage, IAcceptLanguageContext } from '@shared/decorator';
 import { CreateUserDto } from './dto';
+import { ERROR_STATUS_CODE } from '../../shared/translator';
 
 @Controller('user')
 export class UserController {
@@ -18,7 +19,7 @@ export class UserController {
       const errorMessage = result.getError();
       throw new HttpException(
         acceptLanguage({ key: errorMessage.errorKey, param: errorMessage.errorParam }),
-        HttpStatus.BAD_REQUEST,
+        ERROR_STATUS_CODE[errorMessage.errorKey],
       );
     }
 
@@ -32,12 +33,15 @@ export class UserController {
   }
 
   @Get(':id')
-  async getUser(@Param('id') id: string) {
+  async getUser(@Param('id') id: string, @AcceptLanguage() acceptLanguage: IAcceptLanguageContext) {
     const result = await this._getUserUseCase.execute({ userId: id });
 
     if (result.isFailure) {
       const errorMessage = result.getError();
-      throw new HttpException(errorMessage, HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        acceptLanguage({ key: errorMessage.errorKey, param: errorMessage.errorParam }),
+        ERROR_STATUS_CODE[errorMessage.errorKey],
+      );
     }
 
     const user = result.getValue;

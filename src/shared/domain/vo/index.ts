@@ -1,1 +1,1 @@
-export * from './root.vo';
+export * from './id.vo';

@@ -1,18 +1,19 @@
 import { ResultSpecification } from '@shared/domain/specification';
-import { ValueObjectRoot } from '@shared/domain/vo';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
 interface IUserEmailProps {
   value: string;
 }
 
-export class UserEmail extends ValueObjectRoot<IUserEmailProps> {
-  get value(): string {
-    return this.props.value;
-  }
+export class UserEmail {
+  private readonly _props: IUserEmailProps;
 
   private constructor(state: IUserEmailProps) {
-    super(state);
+    this._props = state;
+  }
+
+  get value(): string {
+    return this._props.value;
   }
 
   public static create(email: string): ResultSpecification<UserEmail> {

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { LANGUAGE_TYPE, TRANSLATOR_CONFIG } from './translator.config';
+import { LANGUAGE_TYPE } from './translator.key';
+import { TRANSLATOR_MESSAGE } from './translator.message';
 
 export interface ITranslatorInput {
   key: string;
@@ -11,8 +12,8 @@ export interface ITranslatorInterpolateInput {
 }
 
 @Injectable()
-export class TranslatorService {
-  private _translation: { [key: string]: { [key: string]: string } } = TRANSLATOR_CONFIG;
+export class TranslatorHelper {
+  private _translation: { [key: string]: { [key: string]: string } } = TRANSLATOR_MESSAGE;
   private _currentLanguage: ConstValue<typeof LANGUAGE_TYPE> = LANGUAGE_TYPE.EN;
 
   constructor() {}

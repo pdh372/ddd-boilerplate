@@ -24,7 +24,9 @@ export class GetUserUseCase implements UseCase<IGetUserRequest, UserAggregate> {
     const user = await this._userRepository.findById(userId.getValue);
 
     if (!user) {
-      return ResultSpecification.fail<UserAggregate>({ errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND });
+      return ResultSpecification.fail<UserAggregate>({
+        errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
+      });
     }
 
     return ResultSpecification.ok<UserAggregate>(user);

@@ -1,17 +1,6 @@
-export const LANGUAGE_TYPE = {
-  EN: 'en',
-  VI: 'vi',
-} as const;
+import { LANGUAGE_TYPE, TRANSLATOR_KEY } from './translator.key';
 
-export const TRANSLATOR_KEY = {
-  ERROR__USER__EMAIL_ALREADY_EXISTS: 'error.user.email_already_exists',
-  ERROR__USER__NOT_FOUND: 'error.user.not_found',
-  ERROR__USER__INVALID_EMAIL: 'error.user.invalid_email',
-  ERROR__USER__INVALID_NAME: 'error.user.invalid_name',
-  ERROR__USER__INVALID_ID: 'error.user.invalid_id',
-} as const;
-
-export const TRANSLATOR_CONFIG: Record<
+export const TRANSLATOR_MESSAGE: Record<
   ConstValue<typeof TRANSLATOR_KEY>,
   Record<ConstValue<typeof LANGUAGE_TYPE>, string>
 > = {
@@ -20,8 +9,8 @@ export const TRANSLATOR_CONFIG: Record<
     [LANGUAGE_TYPE.VI]: 'Email đã tồn tại',
   },
   [TRANSLATOR_KEY.ERROR__USER__NOT_FOUND]: {
-    [LANGUAGE_TYPE.EN]: 'User not found {{name}}',
-    [LANGUAGE_TYPE.VI]: 'Không tìm thấy người dùng {{name}}',
+    [LANGUAGE_TYPE.EN]: 'User not found',
+    [LANGUAGE_TYPE.VI]: 'Không tìm thấy người dùng',
   },
   [TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL]: {
     [LANGUAGE_TYPE.EN]: 'Invalid email format',
@@ -31,7 +20,7 @@ export const TRANSLATOR_CONFIG: Record<
     [LANGUAGE_TYPE.EN]: 'Name must be at least {{min_length}} character',
     [LANGUAGE_TYPE.VI]: 'Tên phải có ít nhất {{min_length}} ký tự',
   },
-  [TRANSLATOR_KEY.ERROR__USER__INVALID_ID]: {
+  [TRANSLATOR_KEY.ERROR__COMMON__INVALID_ID]: {
     [LANGUAGE_TYPE.EN]: 'Invalid user ID',
     [LANGUAGE_TYPE.VI]: 'ID người dùng không hợp lệ',
   },
