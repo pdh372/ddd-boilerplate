@@ -15,8 +15,8 @@ export class OrderIdItem extends IdVO {
     return new OrderIdItem({ value: baseId.value });
   }
 
-  public static create(value: string): ResultSpecification<OrderIdItem> {
-    const result = super.create(value);
+  public static validate(value: string): ResultSpecification<OrderIdItem> {
+    const result = super.validate(value);
     if (result.isFailure) {
       return ResultSpecification.fail(result.error);
     }

@@ -15,8 +15,8 @@ export class UserId extends IdVO {
     return new UserId({ value: baseId.value });
   }
 
-  public static create(value: string): ResultSpecification<UserId> {
-    const result = super.create(value);
+  public static validate(value: string): ResultSpecification<UserId> {
+    const result = super.validate(value);
     if (result.isFailure) {
       return ResultSpecification.fail(result.error);
     }

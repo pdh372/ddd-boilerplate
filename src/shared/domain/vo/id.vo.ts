@@ -6,6 +6,14 @@ interface IdProps {
   value: string;
 }
 
+/**
+ * Base Value Object for identifiers following DDD patterns
+ * 
+ * Factory Methods:
+ * - init(): Creates new ID with auto-generated value (for new entities)
+ * - validate(value): Validates and creates ID from external input (user input, API)
+ * - fromValue(value): Creates ID from trusted value without validation (from database)
+ */
 export class IdVO {
   private readonly _props: IdProps;
 
@@ -17,15 +25,27 @@ export class IdVO {
     return this._props.value;
   }
 
+  /**
+   * Creates a new ID with auto-generated value
+   * Use for: Creating new entities/aggregates
+   */
   public static init(): IdVO {
     return new IdVO({ value: new Types.ObjectId()._id.toString() });
   }
 
+  /**
+   * Creates ID from trusted value without validation
+   * Use for: Reconstructing from database, internal operations
+   */
   public static fromValue(value: string): IdVO {
     return new IdVO({ value });
   }
 
-  public static create(value: string): ResultSpecification<IdVO> {
+  /**
+   * Validates and creates ID from external value
+   * Use for: User input, API requests, untrusted sources
+   */
+  public static validate(value: string): ResultSpecification<IdVO> {
     if (!Types.ObjectId.isValid(value)) {
       return ResultSpecification.fail({ errorKey: TRANSLATOR_KEY.ERROR__COMMON__INVALID_ID });
     }

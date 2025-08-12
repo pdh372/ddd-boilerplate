@@ -8,7 +8,7 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
   constructor(private readonly _userRepository: IUserRepository) {}
 
   async execute(input: ICreateUserDto): Promise<ResultSpecification<UserAggregate>> {
-    const email = UserEmail.create(input.email);
+    const email = UserEmail.validate(input.email);
     if (email.isFailure) {
       return ResultSpecification.fail<UserAggregate>({
         errorKey: email.errorKey,
@@ -16,7 +16,7 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
       });
     }
 
-    const name = UserName.create(input.name);
+    const name = UserName.validate(input.name);
     if (name.isFailure) {
       return ResultSpecification.fail<UserAggregate>({
         errorKey: name.errorKey,

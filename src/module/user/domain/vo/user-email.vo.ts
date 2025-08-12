@@ -5,6 +5,13 @@ interface IUserEmailProps {
   value: string;
 }
 
+/**
+ * User Email Value Object
+ * 
+ * Factory Methods:
+ * - validate(email): Validates and creates from user input with email format checking
+ * - fromValue(email): Creates from trusted source without validation
+ */
 export class UserEmail {
   private readonly _props: IUserEmailProps;
 
@@ -16,7 +23,11 @@ export class UserEmail {
     return this._props.value;
   }
 
-  public static create(email: string): ResultSpecification<UserEmail> {
+  /**
+   * Validates and creates UserEmail from external input
+   * Use for: User registration, profile updates, API requests
+   */
+  public static validate(email: string): ResultSpecification<UserEmail> {
     if (!this.isValidEmail(email)) {
       return ResultSpecification.fail<UserEmail>({ errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL });
     }
@@ -24,6 +35,10 @@ export class UserEmail {
     return ResultSpecification.ok<UserEmail>(new UserEmail({ value: email }));
   }
 
+  /**
+   * Creates UserEmail from trusted source without validation
+   * Use for: Database reconstruction, internal operations
+   */
   public static fromValue(email: string): UserEmail {
     return new UserEmail({ value: email });
   }

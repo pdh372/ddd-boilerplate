@@ -3,7 +3,7 @@ import { ResultSpecification } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
 import { OrderItemEntity, type IOrderItemProps } from '../entity';
-import { OrderId } from '../vo';
+import { OrderId, CustomerId } from '../vo';
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -15,7 +15,7 @@ export enum OrderStatus {
 
 interface IOrderProps {
   id: OrderId;
-  customerId: string;
+  customerId: CustomerId;
   status: OrderStatus;
   items: OrderItemEntity[];
   createdAt: Date;
@@ -64,9 +64,14 @@ export class OrderAggregate extends AggregateRoot<OrderId> {
 
     const orderItems = orderItemResults.map((result) => result.getValue);
 
+    const customerIdResult = CustomerId.validate(props.customerId);
+    if (customerIdResult.isFailure) {
+      return ResultSpecification.fail(customerIdResult.error);
+    }
+
     const orderProps: IOrderProps = {
       id: orderId,
-      customerId: props.customerId,
+      customerId: customerIdResult.getValue,
       status: OrderStatus.PENDING,
       items: orderItems,
       createdAt: now,

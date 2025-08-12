@@ -12,7 +12,7 @@ export class GetUserUseCase implements UseCase<IGetUserRequest, UserAggregate> {
   constructor(private readonly _userRepository: IUserRepository) {}
 
   async execute(input: IGetUserRequest): Promise<ResultSpecification<UserAggregate>> {
-    const userId = UserId.create(input.userId);
+    const userId = UserId.validate(input.userId);
     if (userId.isFailure) {
       return ResultSpecification.fail<UserAggregate>({
         errorKey: userId.errorKey,
