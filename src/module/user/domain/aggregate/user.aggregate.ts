@@ -32,7 +32,7 @@ export class UserAggregate extends AggregateRoot<IdVO> {
       ...props,
       createdAt: now,
       updatedAt: now,
-      id: IdVO.fromValue(''),
+      id: IdVO.fromValueCreation(),
     };
 
     const user = new UserAggregate(userProps);

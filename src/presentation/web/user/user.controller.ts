@@ -22,14 +22,14 @@ export class UserController {
       );
     }
 
-    const user = result.getValue;
+    const { props: user } = result.getValue;
 
     return {
-      id: user.props.id,
-      email: user.props.email.value,
-      name: user.props.name.value,
-      createdAt: user.props.createdAt,
-      updatedAt: user.props.updatedAt,
+      id: user.id,
+      email: user.email.value,
+      name: user.name.value,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 
@@ -44,14 +44,14 @@ export class UserController {
       );
     }
 
-    const user = result.getValue;
+    const { props: user } = result.getValue;
 
     return {
-      id: user.props.id,
-      email: user.props.email.value,
-      name: user.props.name.value,
-      createdAt: user.props.createdAt,
-      updatedAt: user.props.updatedAt,
+      id: user.id,
+      email: user.email.value,
+      name: user.name.value,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 }

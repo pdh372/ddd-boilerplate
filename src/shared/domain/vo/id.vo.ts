@@ -44,4 +44,8 @@ export class IdVO {
 
     return ResultSpecification.ok(new IdVO({ value }));
   }
+
+  public static fromValueCreation(): IdVO {
+    return new IdVO({ value: 'VALUE_CREATION' });
+  }
 }

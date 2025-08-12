@@ -39,8 +39,7 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
   }
 
   private constructor(props: IOrderProps) {
-    // For new aggregates without ID, we'll set it later from repository
-    super(props.id || IdVO.fromValue('temp'));
+    super(props.id);
     this._props = props;
   }
 
@@ -81,7 +80,7 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
       items: orderItems,
       createdAt: now,
       updatedAt: now,
-      id: IdVO.fromValue(''),
+      id: IdVO.fromValueCreation(),
     };
 
     const order = new OrderAggregate(orderProps);

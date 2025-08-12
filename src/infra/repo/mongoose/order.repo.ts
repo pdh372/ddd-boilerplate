@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Model, Types } from 'mongoose';
+import { Document, Model } from 'mongoose';
 import { type IOrderRepository, OrderAggregate, OrderStatus } from '@module/order/domain';
 import { ProductName } from '@module/order/domain/vo';
 import { OrderItemEntity } from '@module/order/domain/entity';
