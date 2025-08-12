@@ -71,7 +71,7 @@ export class OrderItemEntity {
       productName: productNameResult.getValue,
       quantity: props.quantity,
       unitPrice: props.unitPrice,
-      id: IdVO.fromValueCreation(),
+      id: IdVO.createPlaceholder(),
     });
 
     return ResultSpecification.ok(orderItem);

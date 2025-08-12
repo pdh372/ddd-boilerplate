@@ -45,7 +45,11 @@ export class IdVO {
     return ResultSpecification.ok(new IdVO({ value }));
   }
 
-  public static fromValueCreation(): IdVO {
-    return new IdVO({ value: 'VALUE_CREATION' });
+  /**
+   * Creates a placeholder ID for new entities before database generation
+   * Use for: New aggregates that will get real ID from database
+   */
+  public static createPlaceholder(): IdVO {
+    return new IdVO({ value: 'PENDING_DB_GENERATION' });
   }
 }

@@ -32,20 +32,40 @@ export class UserMongooseRepository implements IUserRepository {
   ) {}
 
   async save(userAggregate: UserAggregate): Promise<UserAggregate> {
-    const userDoc = {
-      email: userAggregate.props.email.value,
-      name: userAggregate.props.name.value,
-      createdAt: userAggregate.props.createdAt,
-      updatedAt: userAggregate.props.updatedAt,
-    };
+    // Check if this is a new user (placeholder ID) or existing user
+    if (userAggregate.props.id.value === 'PENDING_DB_GENERATION') {
+      // New user - let MongoDB generate ID
+      const userDoc = {
+        email: userAggregate.props.email.value,
+        name: userAggregate.props.name.value,
+        createdAt: userAggregate.props.createdAt,
+        updatedAt: userAggregate.props.updatedAt,
+      };
 
-    const newDoc = await this.userModel.create(userDoc);
+      const newDoc = await this.userModel.create(userDoc);
+      return this.toDomain(newDoc);
+    } else {
+      // Existing user - update
+      const updatedDoc = await this.userModel.findByIdAndUpdate(
+        userAggregate.props.id.value,
+        {
+          email: userAggregate.props.email.value,
+          name: userAggregate.props.name.value,
+          updatedAt: new Date(),
+        },
+        { new: true }
+      );
 
-    return this.toDomain(newDoc);
+      if (!updatedDoc) {
+        throw new Error('User not found for update');
+      }
+
+      return this.toDomain(updatedDoc);
+    }
   }
 
   async findById(id: IdVO): Promise<UserAggregate | null> {
-    const userDoc = await this.userModel.findById(id);
+    const userDoc = await this.userModel.findById(id.value);
 
     if (!userDoc) {
       return null;

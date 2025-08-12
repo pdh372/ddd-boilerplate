@@ -80,7 +80,7 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
       items: orderItems,
       createdAt: now,
       updatedAt: now,
-      id: IdVO.fromValueCreation(),
+      id: IdVO.createPlaceholder(),
     };
 
     const order = new OrderAggregate(orderProps);
