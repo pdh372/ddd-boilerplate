@@ -26,13 +26,13 @@ export class UserAggregate extends AggregateRoot<UserId> {
 
   public static create(props: Omit<IUserProps, 'createdAt' | 'updatedAt' | 'id'>): ResultSpecification<UserAggregate> {
     const now = new Date();
-    const userId = UserId.generate();
+    const userId = UserId.init();
 
     const userProps: IUserProps = {
       ...props,
       createdAt: now,
       updatedAt: now,
-      id: userId.getValue,
+      id: userId,
     };
 
     const user = new UserAggregate(userProps);

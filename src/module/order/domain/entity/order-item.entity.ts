@@ -4,14 +4,14 @@ import { TRANSLATOR_KEY } from '@shared/translator';
 import { OrderIdItem } from '../vo/order-item-id.vo';
 
 export interface IOrderItemProps {
-  id: string;
+  id: OrderIdItem;
   productId: string;
   productName: string;
   quantity: number;
   unitPrice: number;
 }
 
-export class OrderItemEntity extends EntityRoot<string> {
+export class OrderItemEntity extends EntityRoot<OrderIdItem> {
   private _props: IOrderItemProps;
 
   constructor(props: IOrderItemProps) {
@@ -38,10 +38,25 @@ export class OrderItemEntity extends EntityRoot<string> {
     return ResultSpecification.ok();
   }
 
-  public static create(props: Omit<IOrderItemProps, 'id'>): OrderItemEntity {
-    return new OrderItemEntity({
+  public static create(props: Omit<IOrderItemProps, 'id'>): ResultSpecification<OrderItemEntity> {
+    if (props.quantity <= 0) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_QUANTITY,
+        errorParam: { min: 1 },
+      });
+    }
+
+    if (props.unitPrice <= 0) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_UNIT_PRICE,
+      });
+    }
+
+    const orderItem = new OrderItemEntity({
       ...props,
-      id: OrderIdItem.generate().getValue.value,
+      id: OrderIdItem.init(),
     });
+
+    return ResultSpecification.ok(orderItem);
   }
 }

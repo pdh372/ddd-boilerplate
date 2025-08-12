@@ -43,7 +43,7 @@ export class ResultSpecification<T> {
     return this._value as T;
   }
 
-  public getError(): Pick<ResultState, 'errorKey' | 'errorParam'> {
+  public get error(): Pick<ResultState, 'errorKey' | 'errorParam'> {
     if (!this._state.errorKey) {
       throw new Error('error.result.cannot_get_error');
     }

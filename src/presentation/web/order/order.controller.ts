@@ -16,10 +16,9 @@ export class OrderController {
     const result = await this._createOrderUseCase.execute(body);
 
     if (result.isFailure) {
-      const errorMessage = result.getError();
       throw new HttpException(
-        acceptLanguage({ key: errorMessage.errorKey, param: errorMessage.errorParam }),
-        ERROR_STATUS_CODE[errorMessage.errorKey],
+        acceptLanguage({ key: result.errorKey, param: result.errorParam }),
+        ERROR_STATUS_CODE[result.errorKey],
       );
     }
 
@@ -49,10 +48,9 @@ export class OrderController {
     const result = await this._getOrderUseCase.execute({ orderId: id });
 
     if (result.isFailure) {
-      const errorMessage = result.getError();
       throw new HttpException(
-        acceptLanguage({ key: errorMessage.errorKey, param: errorMessage.errorParam }),
-        ERROR_STATUS_CODE[errorMessage.errorKey],
+        acceptLanguage({ key: result.errorKey, param: result.errorParam }),
+        ERROR_STATUS_CODE[result.errorKey],
       );
     }
 

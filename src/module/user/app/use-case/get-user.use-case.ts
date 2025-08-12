@@ -14,10 +14,9 @@ export class GetUserUseCase implements UseCase<IGetUserRequest, UserAggregate> {
   async execute(input: IGetUserRequest): Promise<ResultSpecification<UserAggregate>> {
     const userId = UserId.create(input.userId);
     if (userId.isFailure) {
-      const errorMessage = userId.getError();
       return ResultSpecification.fail<UserAggregate>({
-        errorKey: errorMessage.errorKey,
-        errorParam: errorMessage.errorParam,
+        errorKey: userId.errorKey,
+        errorParam: userId.errorParam,
       });
     }
 

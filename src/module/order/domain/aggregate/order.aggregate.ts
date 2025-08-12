@@ -53,12 +53,19 @@ export class OrderAggregate extends AggregateRoot<OrderId> {
     }
 
     const now = new Date();
-    const orderId = OrderId.generate();
+    const orderId = OrderId.init();
 
-    const orderItems = props.items.map((item) => OrderItemEntity.create(item));
+    const orderItemResults = props.items.map((item) => OrderItemEntity.create(item));
+
+    const failedItem = orderItemResults.find((result) => result.isFailure);
+    if (failedItem) {
+      return ResultSpecification.fail(failedItem.error);
+    }
+
+    const orderItems = orderItemResults.map((result) => result.getValue);
 
     const orderProps: IOrderProps = {
-      id: orderId.getValue,
+      id: orderId,
       customerId: props.customerId,
       status: OrderStatus.PENDING,
       items: orderItems,
@@ -76,15 +83,19 @@ export class OrderAggregate extends AggregateRoot<OrderId> {
   }
 
   public addItem(itemProps: Omit<IOrderItemProps, 'id'>): ResultSpecification<void> {
-    const newItem = OrderItemEntity.create(itemProps);
-    this._props.items.push(newItem);
+    const itemResult = OrderItemEntity.create(itemProps);
+    if (itemResult.isFailure) {
+      return ResultSpecification.fail(itemResult.error);
+    }
+
+    this._props.items.push(itemResult.getValue);
     this._props.updatedAt = new Date();
 
     return ResultSpecification.ok();
   }
 
   public updateItemQuantity(itemId: string, quantity: number): ResultSpecification<void> {
-    const item = this._props.items.find((item) => item.props.id === itemId);
+    const item = this._props.items.find((item) => item.props.id.value === itemId);
 
     if (!item) {
       return ResultSpecification.fail({
@@ -108,7 +119,7 @@ export class OrderAggregate extends AggregateRoot<OrderId> {
       });
     }
 
-    const itemIndex = this._props.items.findIndex((item) => item.props.id === itemId);
+    const itemIndex = this._props.items.findIndex((item) => item.props.id.value === itemId);
 
     if (itemIndex === -1) {
       return ResultSpecification.fail({

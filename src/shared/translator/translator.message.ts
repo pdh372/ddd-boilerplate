@@ -4,6 +4,7 @@ export const TRANSLATOR_MESSAGE: Record<
   ConstValue<typeof TRANSLATOR_KEY>,
   Record<ConstValue<typeof LANGUAGE_TYPE>, string>
 > = {
+  // USER
   [TRANSLATOR_KEY.ERROR__USER__EMAIL_ALREADY_EXISTS]: {
     [LANGUAGE_TYPE.EN]: 'Email already exists',
     [LANGUAGE_TYPE.VI]: 'Email đã tồn tại',
@@ -20,9 +21,15 @@ export const TRANSLATOR_MESSAGE: Record<
     [LANGUAGE_TYPE.EN]: 'Name must be at least {{min_length}} character',
     [LANGUAGE_TYPE.VI]: 'Tên phải có ít nhất {{min_length}} ký tự',
   },
+
+  // ORDER
   [TRANSLATOR_KEY.ERROR__ORDER__INVALID_QUANTITY]: {
     [LANGUAGE_TYPE.EN]: 'Quantity must be greater than {{min}}',
     [LANGUAGE_TYPE.VI]: 'Số lượng phải lớn hơn {{min}}',
+  },
+  [TRANSLATOR_KEY.ERROR__ORDER__INVALID_UNIT_PRICE]: {
+    [LANGUAGE_TYPE.EN]: 'Unit price must be greater than 0',
+    [LANGUAGE_TYPE.VI]: 'Giá đơn vị phải lớn hơn 0',
   },
   [TRANSLATOR_KEY.ERROR__ORDER__ITEM_NOT_FOUND]: {
     [LANGUAGE_TYPE.EN]: 'Order item not found',
@@ -44,6 +51,8 @@ export const TRANSLATOR_MESSAGE: Record<
     [LANGUAGE_TYPE.EN]: 'Order not found',
     [LANGUAGE_TYPE.VI]: 'Không tìm thấy đơn hàng',
   },
+
+  // COMMON
   [TRANSLATOR_KEY.ERROR__COMMON__INVALID_ID]: {
     [LANGUAGE_TYPE.EN]: 'Invalid user ID',
     [LANGUAGE_TYPE.VI]: 'ID người dùng không hợp lệ',

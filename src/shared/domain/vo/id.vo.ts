@@ -17,8 +17,12 @@ export class IdVO {
     return this._props.value;
   }
 
-  public static generate(): ResultSpecification<IdVO> {
-    return ResultSpecification.ok(new IdVO({ value: new Types.ObjectId()._id.toString() }));
+  public static init(): IdVO {
+    return new IdVO({ value: new Types.ObjectId()._id.toString() });
+  }
+
+  public static fromValue(value: string): IdVO {
+    return new IdVO({ value });
   }
 
   public static create(value: string): ResultSpecification<IdVO> {
@@ -27,9 +31,5 @@ export class IdVO {
     }
 
     return ResultSpecification.ok(new IdVO({ value }));
-  }
-
-  public static fromValue(value: string): IdVO {
-    return new IdVO({ value });
   }
 }
