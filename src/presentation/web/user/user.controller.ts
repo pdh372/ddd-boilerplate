@@ -25,7 +25,7 @@ export class UserController {
     const user = result.getValue;
 
     return {
-      id: user.props.id.value,
+      id: user.props.id,
       email: user.props.email.value,
       name: user.props.name.value,
       createdAt: user.props.createdAt,
@@ -47,7 +47,7 @@ export class UserController {
     const user = result.getValue;
 
     return {
-      id: user.props.id.value,
+      id: user.props.id,
       email: user.props.email.value,
       name: user.props.name.value,
       createdAt: user.props.createdAt,

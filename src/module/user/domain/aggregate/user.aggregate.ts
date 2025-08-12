@@ -1,18 +1,19 @@
 import { AggregateRoot } from '@shared/domain/aggregate';
 import { ResultSpecification } from '@shared/domain/specification';
+import { IdVO } from '@shared/domain/vo';
 
 import { UserCreatedEvent } from '../event';
-import { type UserEmail, type UserName, UserId } from '../vo';
+import { type UserEmail, type UserName } from '../vo';
 
 interface IUserProps {
-  id: UserId;
+  id: IdVO;
   email: UserEmail;
   name: UserName;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export class UserAggregate extends AggregateRoot<UserId> {
+export class UserAggregate extends AggregateRoot<IdVO> {
   private _props: IUserProps;
 
   get props(): IUserProps {
@@ -26,13 +27,12 @@ export class UserAggregate extends AggregateRoot<UserId> {
 
   public static create(props: Omit<IUserProps, 'createdAt' | 'updatedAt' | 'id'>): ResultSpecification<UserAggregate> {
     const now = new Date();
-    const userId = UserId.init();
 
     const userProps: IUserProps = {
       ...props,
       createdAt: now,
       updatedAt: now,
-      id: userId,
+      id: IdVO.fromValue(''),
     };
 
     const user = new UserAggregate(userProps);

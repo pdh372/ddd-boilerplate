@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Model } from 'mongoose';
 import { type IUserRepository, UserAggregate } from '@module/user/domain';
-import { UserEmail, UserId, UserName } from '@module/user/domain/vo';
+import { UserEmail, UserName } from '@module/user/domain/vo';
+import { IdVO } from '@shared/domain/vo';
 
 @Schema({ collection: 'users' })
 export class UserDocument extends Document {
@@ -43,8 +44,8 @@ export class UserMongooseRepository implements IUserRepository {
     return this.toDomain(newDoc);
   }
 
-  async findById(id: UserId): Promise<UserAggregate | null> {
-    const userDoc = await this.userModel.findById(id.value);
+  async findById(id: IdVO): Promise<UserAggregate | null> {
+    const userDoc = await this.userModel.findById(id);
 
     if (!userDoc) {
       return null;
@@ -53,8 +54,8 @@ export class UserMongooseRepository implements IUserRepository {
     return this.toDomain(userDoc);
   }
 
-  async delete(id: UserId): Promise<void> {
-    await this.userModel.findByIdAndDelete(id.value);
+  async delete(id: IdVO): Promise<void> {
+    await this.userModel.findByIdAndDelete(id);
   }
 
   async findByEmail(email: UserEmail): Promise<UserAggregate | null> {
@@ -68,7 +69,7 @@ export class UserMongooseRepository implements IUserRepository {
   }
 
   private toDomain(userDoc: UserDocument): UserAggregate {
-    const userId = UserId.fromValue(userDoc._id.toString());
+    const userId = IdVO.fromValue(userDoc._id.toString());
     const userEmail = UserEmail.fromValue(userDoc.email);
     const userName = UserName.fromValue(userDoc.name);
 

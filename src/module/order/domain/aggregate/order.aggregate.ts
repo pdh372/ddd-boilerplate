@@ -2,9 +2,9 @@ import { AggregateRoot } from '@shared/domain/aggregate';
 import { ResultSpecification } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
-import { OrderItemEntity, type IOrderItemProps } from '../entity';
-import { OrderId, CustomerId } from '../vo';
+import { OrderItemEntity } from '../entity';
 import { OrderStatusChangedEvent, OrderItemAddedEvent } from '../event';
+import { IdVO } from '@shared/domain/vo';
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -15,15 +15,15 @@ export enum OrderStatus {
 }
 
 interface IOrderProps {
-  id: OrderId;
-  customerId: CustomerId;
+  id: IdVO;
+  customerId: IdVO;
   status: OrderStatus;
   items: OrderItemEntity[];
   createdAt: Date;
   updatedAt: Date;
 }
 
-export class OrderAggregate extends AggregateRoot<OrderId> {
+export class OrderAggregate extends AggregateRoot<IdVO> {
   private _props: IOrderProps;
 
   get props(): IOrderProps {
@@ -39,7 +39,8 @@ export class OrderAggregate extends AggregateRoot<OrderId> {
   }
 
   private constructor(props: IOrderProps) {
-    super(props.id);
+    // For new aggregates without ID, we'll set it later from repository
+    super(props.id || IdVO.fromValue('temp'));
     this._props = props;
   }
 
@@ -59,7 +60,6 @@ export class OrderAggregate extends AggregateRoot<OrderId> {
     }
 
     const now = new Date();
-    const orderId = OrderId.init();
 
     const orderItemResults = props.items.map((item) => OrderItemEntity.create(item));
 
@@ -70,18 +70,18 @@ export class OrderAggregate extends AggregateRoot<OrderId> {
 
     const orderItems = orderItemResults.map((result) => result.getValue);
 
-    const customerIdResult = CustomerId.validate(props.customerId);
+    const customerIdResult = IdVO.validate(props.customerId);
     if (customerIdResult.isFailure) {
       return ResultSpecification.fail(customerIdResult.error);
     }
 
     const orderProps: IOrderProps = {
-      id: orderId,
       customerId: customerIdResult.getValue,
       status: OrderStatus.PENDING,
       items: orderItems,
       createdAt: now,
       updatedAt: now,
+      id: IdVO.fromValue(''),
     };
 
     const order = new OrderAggregate(orderProps);

@@ -8,7 +8,7 @@ interface IdProps {
 
 /**
  * Base Value Object for identifiers following DDD patterns
- * 
+ *
  * Factory Methods:
  * - init(): Creates new ID with auto-generated value (for new entities)
  * - validate(value): Validates and creates ID from external input (user input, API)
@@ -23,14 +23,6 @@ export class IdVO {
 
   get value(): string {
     return this._props.value;
-  }
-
-  /**
-   * Creates a new ID with auto-generated value
-   * Use for: Creating new entities/aggregates
-   */
-  public static init(): IdVO {
-    return new IdVO({ value: new Types.ObjectId()._id.toString() });
   }
 
   /**

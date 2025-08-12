@@ -25,7 +25,7 @@ export class OrderController {
     const order = result.getValue;
 
     return {
-      id: order.props.id.value,
+      id: order.props.id,
       customerId: order.props.customerId,
       status: order.props.status,
       totalAmount: order.totalAmount,
@@ -57,7 +57,7 @@ export class OrderController {
     const order = result.getValue;
 
     return {
-      id: order.props.id.value,
+      id: order.props.id,
       customerId: order.props.customerId,
       status: order.props.status,
       totalAmount: order.totalAmount,

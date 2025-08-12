@@ -1,21 +1,20 @@
-import { EntityRoot } from '@shared/domain/entity';
 import { ResultSpecification } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
-import { OrderIdItem, ProductId, ProductName } from '../vo';
+import { ProductName } from '../vo';
+import { IdVO } from '@shared/domain/vo';
 
 export interface IOrderItemProps {
-  id: OrderIdItem;
-  productId: ProductId;
+  id: IdVO;
+  productId: string;
   productName: ProductName;
   quantity: number;
   unitPrice: number;
 }
 
-export class OrderItemEntity extends EntityRoot<OrderIdItem> {
+export class OrderItemEntity {
   private _props: IOrderItemProps;
 
   constructor(props: IOrderItemProps) {
-    super(props.id);
     this._props = props;
   }
 
@@ -57,7 +56,7 @@ export class OrderItemEntity extends EntityRoot<OrderIdItem> {
       });
     }
 
-    const productIdResult = ProductId.validate(props.productId);
+    const productIdResult = IdVO.validate(props.productId);
     if (productIdResult.isFailure) {
       return ResultSpecification.fail(productIdResult.error);
     }
@@ -68,11 +67,11 @@ export class OrderItemEntity extends EntityRoot<OrderIdItem> {
     }
 
     const orderItem = new OrderItemEntity({
-      id: OrderIdItem.init(),
-      productId: productIdResult.getValue,
+      productId: productIdResult.getValue.value,
       productName: productNameResult.getValue,
       quantity: props.quantity,
       unitPrice: props.unitPrice,
+      id: IdVO.fromValue(''),
     });
 
     return ResultSpecification.ok(orderItem);

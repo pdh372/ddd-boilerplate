@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Model } from 'mongoose';
+import { Document, Model, Types } from 'mongoose';
 import { type IOrderRepository, OrderAggregate, OrderStatus } from '@module/order/domain';
-import { OrderId, CustomerId, OrderIdItem, ProductId, ProductName } from '@module/order/domain/vo';
+import { ProductName } from '@module/order/domain/vo';
 import { OrderItemEntity } from '@module/order/domain/entity';
+import { IdVO } from '../../../shared/domain/vo';
 
 @Schema()
 export class OrderItemDocument {
@@ -56,11 +57,10 @@ export class OrderMongooseRepository implements IOrderRepository {
 
   async save(orderAggregate: OrderAggregate): Promise<OrderAggregate> {
     const orderDoc = {
-      customerId: orderAggregate.props.customerId.value,
+      customerId: orderAggregate.props.customerId,
       status: orderAggregate.props.status,
-      items: orderAggregate.props.items.map(item => ({
-        id: item.props.id.value,
-        productId: item.props.productId.value,
+      items: orderAggregate.props.items.map((item) => ({
+        productId: item.props.productId,
         productName: item.props.productName.value,
         quantity: item.props.quantity,
         unitPrice: item.props.unitPrice,
@@ -73,8 +73,8 @@ export class OrderMongooseRepository implements IOrderRepository {
     return this.toDomain(newDoc);
   }
 
-  async findById(id: OrderId): Promise<OrderAggregate | null> {
-    const orderDoc = await this.orderModel.findById(id.value);
+  async findById(id: IdVO): Promise<OrderAggregate | null> {
+    const orderDoc = await this.orderModel.findById(id);
 
     if (!orderDoc) {
       return null;
@@ -83,34 +83,36 @@ export class OrderMongooseRepository implements IOrderRepository {
     return this.toDomain(orderDoc);
   }
 
-  async findByCustomerId(customerId: CustomerId): Promise<OrderAggregate[]> {
-    const orderDocs = await this.orderModel.find({ customerId: customerId.value });
-    return orderDocs.map(doc => this.toDomain(doc));
+  async findByCustomerId(customerId: IdVO): Promise<OrderAggregate[]> {
+    const orderDocs = await this.orderModel.find({ customerId });
+    return orderDocs.map((doc) => this.toDomain(doc));
   }
 
-  async delete(id: OrderId): Promise<void> {
-    await this.orderModel.findByIdAndDelete(id.value);
+  async delete(id: IdVO): Promise<void> {
+    await this.orderModel.findByIdAndDelete(id);
   }
 
   private toDomain(orderDoc: OrderDocument): OrderAggregate {
-    const orderId = OrderId.fromValue(orderDoc._id.toString());
-    const customerId = CustomerId.fromValue(orderDoc.customerId);
+    const orderId = IdVO.fromValue(orderDoc._id.toString());
+    const customerId = IdVO.fromValue(orderDoc.customerId);
 
-    const items = orderDoc.items.map(itemDoc => {
+    const items = orderDoc.items.map((itemDoc) => {
       return new OrderItemEntity({
-        id: OrderIdItem.fromValue(itemDoc.id),
-        productId: ProductId.fromValue(itemDoc.productId),
+        productId: itemDoc.productId,
         productName: ProductName.fromValue(itemDoc.productName),
         quantity: itemDoc.quantity,
         unitPrice: itemDoc.unitPrice,
+        id: IdVO.fromValue(itemDoc.id),
       });
     });
 
     const order = OrderAggregate.fromValue({
       id: orderId,
-      customerId: customerId,
+      customerId,
+
       status: orderDoc.status,
       items: items,
+
       createdAt: orderDoc.createdAt,
       updatedAt: orderDoc.updatedAt,
     });
