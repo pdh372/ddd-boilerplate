@@ -16,6 +16,7 @@ export const TRANSLATOR_KEY = {
   ERROR__ORDER__EMPTY_ORDER: 'error.order.empty_order',
   ERROR__ORDER__INVALID_STATUS_TRANSITION: 'error.order.invalid_status_transition',
   ERROR__ORDER__NOT_FOUND: 'error.order.not_found',
+  ERROR__ORDER__INVALID_PRODUCT_NAME: 'error.order.invalid_product_name',
 
   ERROR__COMMON__INVALID_ID: 'error.common.invalid_id',
 } as const;

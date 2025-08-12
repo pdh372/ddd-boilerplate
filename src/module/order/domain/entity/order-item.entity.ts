@@ -1,12 +1,12 @@
 import { EntityRoot } from '@shared/domain/entity';
 import { ResultSpecification } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
-import { OrderIdItem } from '../vo/order-item-id.vo';
+import { OrderIdItem, ProductId, ProductName } from '../vo';
 
 export interface IOrderItemProps {
   id: OrderIdItem;
-  productId: string;
-  productName: string;
+  productId: ProductId;
+  productName: ProductName;
   quantity: number;
   unitPrice: number;
 }
@@ -38,7 +38,12 @@ export class OrderItemEntity extends EntityRoot<OrderIdItem> {
     return ResultSpecification.ok();
   }
 
-  public static create(props: Omit<IOrderItemProps, 'id'>): ResultSpecification<OrderItemEntity> {
+  public static create(props: {
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+  }): ResultSpecification<OrderItemEntity> {
     if (props.quantity <= 0) {
       return ResultSpecification.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_QUANTITY,
@@ -52,9 +57,22 @@ export class OrderItemEntity extends EntityRoot<OrderIdItem> {
       });
     }
 
+    const productIdResult = ProductId.validate(props.productId);
+    if (productIdResult.isFailure) {
+      return ResultSpecification.fail(productIdResult.error);
+    }
+
+    const productNameResult = ProductName.validate(props.productName);
+    if (productNameResult.isFailure) {
+      return ResultSpecification.fail(productNameResult.error);
+    }
+
     const orderItem = new OrderItemEntity({
-      ...props,
       id: OrderIdItem.init(),
+      productId: productIdResult.getValue,
+      productName: productNameResult.getValue,
+      quantity: props.quantity,
+      unitPrice: props.unitPrice,
     });
 
     return ResultSpecification.ok(orderItem);

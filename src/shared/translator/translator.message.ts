@@ -51,6 +51,10 @@ export const TRANSLATOR_MESSAGE: Record<
     [LANGUAGE_TYPE.EN]: 'Order not found',
     [LANGUAGE_TYPE.VI]: 'Không tìm thấy đơn hàng',
   },
+  [TRANSLATOR_KEY.ERROR__ORDER__INVALID_PRODUCT_NAME]: {
+    [LANGUAGE_TYPE.EN]: 'Product name must be between 1 and 255 characters',
+    [LANGUAGE_TYPE.VI]: 'Tên sản phẩm phải từ 1 đến 255 ký tự',
+  },
 
   // COMMON
   [TRANSLATOR_KEY.ERROR__COMMON__INVALID_ID]: {

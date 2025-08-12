@@ -4,6 +4,7 @@ import { TRANSLATOR_KEY } from '@shared/translator';
 
 import { OrderItemEntity, type IOrderItemProps } from '../entity';
 import { OrderId, CustomerId } from '../vo';
+import { OrderStatusChangedEvent, OrderItemAddedEvent } from '../event';
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -44,7 +45,12 @@ export class OrderAggregate extends AggregateRoot<OrderId> {
 
   public static create(props: {
     customerId: string;
-    items: Omit<IOrderItemProps, 'id'>[];
+    items: {
+      productId: string;
+      productName: string;
+      quantity: number;
+      unitPrice: number;
+    }[];
   }): ResultSpecification<OrderAggregate> {
     if (props.items.length === 0) {
       return ResultSpecification.fail({
@@ -87,14 +93,22 @@ export class OrderAggregate extends AggregateRoot<OrderId> {
     return new OrderAggregate(state);
   }
 
-  public addItem(itemProps: Omit<IOrderItemProps, 'id'>): ResultSpecification<void> {
+  public addItem(itemProps: {
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+  }): ResultSpecification<void> {
     const itemResult = OrderItemEntity.create(itemProps);
     if (itemResult.isFailure) {
       return ResultSpecification.fail(itemResult.error);
     }
 
-    this._props.items.push(itemResult.getValue);
+    const newItem = itemResult.getValue;
+    this._props.items.push(newItem);
     this._props.updatedAt = new Date();
+
+    this.addDomainEvent(new OrderItemAddedEvent(this, newItem));
 
     return ResultSpecification.ok();
   }
@@ -145,8 +159,65 @@ export class OrderAggregate extends AggregateRoot<OrderId> {
       });
     }
 
+    if (this._props.items.length === 0) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__EMPTY_ORDER,
+      });
+    }
+
+    const previousStatus = this._props.status;
     this._props.status = OrderStatus.CONFIRMED;
     this._props.updatedAt = new Date();
+
+    this.addDomainEvent(new OrderStatusChangedEvent(this, previousStatus, OrderStatus.CONFIRMED));
+
+    return ResultSpecification.ok();
+  }
+
+  public shipOrder(): ResultSpecification<void> {
+    if (this._props.status !== OrderStatus.CONFIRMED) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_STATUS_TRANSITION,
+      });
+    }
+
+    const previousStatus = this._props.status;
+    this._props.status = OrderStatus.SHIPPED;
+    this._props.updatedAt = new Date();
+
+    this.addDomainEvent(new OrderStatusChangedEvent(this, previousStatus, OrderStatus.SHIPPED));
+
+    return ResultSpecification.ok();
+  }
+
+  public deliverOrder(): ResultSpecification<void> {
+    if (this._props.status !== OrderStatus.SHIPPED) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_STATUS_TRANSITION,
+      });
+    }
+
+    const previousStatus = this._props.status;
+    this._props.status = OrderStatus.DELIVERED;
+    this._props.updatedAt = new Date();
+
+    this.addDomainEvent(new OrderStatusChangedEvent(this, previousStatus, OrderStatus.DELIVERED));
+
+    return ResultSpecification.ok();
+  }
+
+  public cancelOrder(): ResultSpecification<void> {
+    if (this._props.status === OrderStatus.DELIVERED) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_STATUS_TRANSITION,
+      });
+    }
+
+    const previousStatus = this._props.status;
+    this._props.status = OrderStatus.CANCELLED;
+    this._props.updatedAt = new Date();
+
+    this.addDomainEvent(new OrderStatusChangedEvent(this, previousStatus, OrderStatus.CANCELLED));
 
     return ResultSpecification.ok();
   }

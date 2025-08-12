@@ -1,3 +1,7 @@
+interface Equatable {
+  equals(other: unknown): boolean;
+}
+
 export abstract class EntityRoot<T> {
   protected readonly _id: T;
 
@@ -6,7 +10,7 @@ export abstract class EntityRoot<T> {
   }
 
   public equals(object?: EntityRoot<T>): boolean {
-    if (object === null || object === undefined) {
+    if (object == null) {
       return false;
     }
 
@@ -16,6 +20,10 @@ export abstract class EntityRoot<T> {
 
     if (!(object instanceof EntityRoot)) {
       return false;
+    }
+
+    if (this._id && typeof this._id === 'object' && 'equals' in this._id) {
+      return (this._id as unknown as Equatable).equals(object._id);
     }
 
     return this._id === object._id;
