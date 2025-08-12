@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import type { IUserRepository, UserAggregate } from '@module/user/domain';
-import type { UserEmail, UserId } from '@module/user/domain/vo';
+import { type IUserRepository, UserAggregate } from '@module/user/domain';
+import { UserEmail, UserId, UserName } from '@module/user/domain/vo';
 
 // TypeORM Entity
 import { Entity, Column, PrimaryColumn, Repository } from 'typeorm';
@@ -52,13 +52,11 @@ export class UserTypeOrmRepository implements IUserRepository {
       return null;
     }
 
-    // Convert back to domain aggregate (you'll need a factory method)
-    // This is simplified - you'd normally use a mapper
-    return null; // TODO: Implement proper domain reconstruction
+    return this.toDomain(userEntity);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.userRepository.delete({ id });
+  async delete(id: UserId): Promise<void> {
+    await this.userRepository.delete({ id: id.value });
   }
 
   async findByEmail(email: UserEmail): Promise<UserAggregate | null> {
@@ -70,7 +68,22 @@ export class UserTypeOrmRepository implements IUserRepository {
       return null;
     }
 
-    // Convert back to domain aggregate
-    return null; // TODO: Implement proper domain reconstruction
+    return this.toDomain(userEntity);
+  }
+
+  private toDomain(userEntity: UserEntity): UserAggregate {
+    const userId = UserId.fromValue(userEntity.id);
+    const userEmail = UserEmail.fromValue(userEntity.email);
+    const userName = UserName.fromValue(userEntity.name);
+
+    const user = UserAggregate.fromValue({
+      id: userId,
+      email: userEmail,
+      name: userName,
+      createdAt: userEntity.createdAt,
+      updatedAt: userEntity.updatedAt,
+    });
+
+    return user;
   }
 }

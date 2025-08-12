@@ -11,9 +11,15 @@ export class GetOrderUseCase implements UseCase<IGetOrderDto, OrderAggregate> {
   constructor(private readonly _orderRepository: IOrderRepository) {}
 
   async execute(input: IGetOrderDto): Promise<ResultSpecification<OrderAggregate>> {
-    const orderId = OrderId.fromValue(input.orderId);
+    const orderIdResult = OrderId.validate(input.orderId);
+    if (orderIdResult.isFailure) {
+      return ResultSpecification.fail<OrderAggregate>({
+        errorKey: orderIdResult.errorKey,
+        errorParam: orderIdResult.errorParam,
+      });
+    }
 
-    const order = await this._orderRepository.findById(orderId);
+    const order = await this._orderRepository.findById(orderIdResult.getValue);
 
     if (!order) {
       return ResultSpecification.fail<OrderAggregate>({

@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Model } from 'mongoose';
 import { type IUserRepository, UserAggregate } from '@module/user/domain';
-import { UserEmail, UserId } from '@module/user/domain/vo';
-import { UserName } from '../../../module/user/domain';
+import { UserEmail, UserId, UserName } from '@module/user/domain/vo';
 
 @Schema({ collection: 'users' })
 export class UserDocument extends Document {
@@ -54,8 +53,8 @@ export class UserMongooseRepository implements IUserRepository {
     return this.toDomain(userDoc);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.userModel.findByIdAndDelete(id);
+  async delete(id: UserId): Promise<void> {
+    await this.userModel.findByIdAndDelete(id.value);
   }
 
   async findByEmail(email: UserEmail): Promise<UserAggregate | null> {
