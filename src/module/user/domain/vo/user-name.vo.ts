@@ -1,6 +1,6 @@
 import { ResultSpecification } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
-import { isAlpha, isLength } from 'validator';
+import { isLength } from 'validator';
 
 interface IUserNameProps {
   readonly value: string; // Make readonly for extra safety
@@ -24,7 +24,8 @@ export class UserName {
   // Constants for validation rules
   private static readonly MIN_LENGTH = 1;
   private static readonly MAX_LENGTH = 100;
-  private static readonly ALLOWED_PATTERN = /^[a-zA-ZÀ-ỹ\s'-]+$/; // Letters, spaces, apostrophes, hyphens
+  // More comprehensive pattern supporting international characters
+  private static readonly ALLOWED_PATTERN = /^[\p{L}\p{M}\s'-]+$/u; // Unicode letters, marks, spaces, apostrophes, hyphens
 
   private constructor(state: IUserNameProps) {
     // Defensive programming - ensure props are frozen
@@ -114,7 +115,7 @@ export class UserName {
       });
     }
 
-    // Pattern validation - allow letters, spaces, hyphens, apostrophes
+    // Pattern validation using Unicode regex for international names
     if (!this.ALLOWED_PATTERN.test(trimmedName)) {
       return ResultSpecification.fail<UserName>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_NAME,
@@ -127,6 +128,14 @@ export class UserName {
       return ResultSpecification.fail<UserName>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_NAME,
         errorParam: { reason: 'Name cannot have consecutive spaces' },
+      });
+    }
+
+    // Check for leading/trailing hyphens or apostrophes
+    if (/^[-']|[-']$/.test(trimmedName)) {
+      return ResultSpecification.fail<UserName>({
+        errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_NAME,
+        errorParam: { reason: 'Name cannot start or end with hyphens or apostrophes' },
       });
     }
 
@@ -166,14 +175,27 @@ export class UserName {
 
   /**
    * Normalizes name by removing extra spaces and capitalizing properly
+   * Handles international characters correctly
    * @param name - Name to normalize
    * @returns Normalized name
    */
   private static normalizeName(name: string): string {
     return name
       .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .trim() // Ensure no leading/trailing spaces
       .split(' ')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map((word) => {
+        // Handle hyphenated names and apostrophes correctly
+        return word
+          .split('-')
+          .map((part) =>
+            part
+              .split("'")
+              .map((subpart) => subpart.charAt(0).toUpperCase() + subpart.slice(1).toLowerCase())
+              .join("'"),
+          )
+          .join('-');
+      })
       .join(' ');
   }
 }

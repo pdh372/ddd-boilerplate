@@ -1,8 +1,9 @@
 import { Controller, Post, Get, Body, Param, HttpException } from '@nestjs/common';
 import { CreateUserUseCase, GetUserUseCase } from '@module/user/app/use-case';
 import { AcceptLanguage, IAcceptLanguageContext } from '@shared/decorator';
-import { CreateUserDto } from './dto';
+import { CreateUserDto, UserResponseDto } from './dto';
 import { ERROR_STATUS_CODE } from '@shared/translator';
+import { UserMapper } from './mapper/user.mapper';
 
 @Controller('user')
 export class UserController {
@@ -12,7 +13,10 @@ export class UserController {
   ) {}
 
   @Post()
-  async createUser(@Body() body: CreateUserDto, @AcceptLanguage() acceptLanguage: IAcceptLanguageContext) {
+  async createUser(
+    @Body() body: CreateUserDto,
+    @AcceptLanguage() acceptLanguage: IAcceptLanguageContext,
+  ): Promise<UserResponseDto> {
     const result = await this._createUserUseCase.execute(body);
 
     if (result.isFailure) {
@@ -23,18 +27,14 @@ export class UserController {
     }
 
     const user = result.getValue;
-
-    return {
-      id: user.id.value,
-      email: user.email.value,
-      name: user.name.value,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+    return UserMapper.toResponseDto(user);
   }
 
   @Get(':id')
-  async getUser(@Param('id') id: string, @AcceptLanguage() acceptLanguage: IAcceptLanguageContext) {
+  async getUser(
+    @Param('id') id: string,
+    @AcceptLanguage() acceptLanguage: IAcceptLanguageContext,
+  ): Promise<UserResponseDto> {
     const result = await this._getUserUseCase.execute({ userId: id });
 
     if (result.isFailure) {
@@ -45,13 +45,6 @@ export class UserController {
     }
 
     const user = result.getValue;
-
-    return {
-      id: user.id.value,
-      email: user.email.value,
-      name: user.name.value,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+    return UserMapper.toResponseDto(user);
   }
 }
