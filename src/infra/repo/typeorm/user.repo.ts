@@ -34,10 +34,10 @@ export class UserTypeOrmRepository implements IUserRepository {
   async save(entity: UserAggregate): Promise<UserAggregate> {
     const userEntity = new UserEntity();
 
-    userEntity.email = entity.props.email.value;
-    userEntity.name = entity.props.name.value;
-    userEntity.createdAt = entity.props.createdAt;
-    userEntity.updatedAt = entity.props.updatedAt;
+    userEntity.email = entity.email.value;
+    userEntity.name = entity.name.value;
+    userEntity.createdAt = entity.createdAt;
+    userEntity.updatedAt = entity.updatedAt;
 
     const savedEntity = await this.userRepository.save(userEntity);
     return this.toDomain(savedEntity);

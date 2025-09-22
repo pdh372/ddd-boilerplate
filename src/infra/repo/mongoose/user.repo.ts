@@ -33,13 +33,13 @@ export class UserMongooseRepository implements IUserRepository {
 
   async save(userAggregate: UserAggregate): Promise<UserAggregate> {
     // Check if this is a new user (placeholder ID) or existing user
-    if (userAggregate.props.id.value === 'PENDING_DB_GENERATION') {
+    if (userAggregate.id.value === 'PENDING_DB_GENERATION') {
       // New user - let MongoDB generate ID
       const userDoc = {
-        email: userAggregate.props.email.value,
-        name: userAggregate.props.name.value,
-        createdAt: userAggregate.props.createdAt,
-        updatedAt: userAggregate.props.updatedAt,
+        email: userAggregate.email.value,
+        name: userAggregate.name.value,
+        createdAt: userAggregate.createdAt,
+        updatedAt: userAggregate.updatedAt,
       };
 
       const newDoc = await this.userModel.create(userDoc);
@@ -47,13 +47,13 @@ export class UserMongooseRepository implements IUserRepository {
     } else {
       // Existing user - update
       const updatedDoc = await this.userModel.findByIdAndUpdate(
-        userAggregate.props.id.value,
+        userAggregate.id.value,
         {
-          email: userAggregate.props.email.value,
-          name: userAggregate.props.name.value,
+          email: userAggregate.email.value,
+          name: userAggregate.name.value,
           updatedAt: new Date(),
         },
-        { new: true }
+        { new: true },
       );
 
       if (!updatedDoc) {

@@ -22,10 +22,10 @@ export class UserController {
       );
     }
 
-    const { props: user } = result.getValue;
+    const user = result.getValue;
 
     return {
-      id: user.id,
+      id: user.id.value,
       email: user.email.value,
       name: user.name.value,
       createdAt: user.createdAt,
@@ -44,10 +44,10 @@ export class UserController {
       );
     }
 
-    const { props: user } = result.getValue;
+    const user = result.getValue;
 
     return {
-      id: user.id,
+      id: user.id.value,
       email: user.email.value,
       name: user.name.value,
       createdAt: user.createdAt,
