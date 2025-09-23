@@ -5,10 +5,11 @@ import { OrderDocument, OrderSchema, OrderMongooseRepository } from '../repo/mon
 import { USER_REPOSITORY } from '@module/user/user.token';
 import { ORDER_REPOSITORY } from '@module/order/order.token';
 import { EventInfraModule } from '../event/event.module';
-import { ConfigService } from '@shared/config';
+import { ConfigModule, ConfigService } from '@shared/config';
 
 @Module({
   imports: [
+    ConfigModule,
     MongooseModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         uri: configService.database.mongodb.uri,
@@ -22,7 +23,6 @@ import { ConfigService } from '@shared/config';
     EventInfraModule,
   ],
   providers: [
-    ConfigService,
     {
       provide: USER_REPOSITORY,
       useClass: UserMongooseRepository,

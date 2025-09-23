@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import * as dotenv from 'dotenv';
+import { join } from 'path';
 
 export interface IDatabaseConfig {
   mongodb: {
@@ -24,22 +26,28 @@ export class ConfigService {
   private readonly config: IAppConfig;
 
   constructor() {
+    // Load .env file explicitly
+    dotenv.config({ path: join(process.cwd(), '.env') });
     this.config = this.validateAndBuildConfig();
   }
 
   private validateAndBuildConfig(): IAppConfig {
+    // PostgreSQL is optional for development, MongoDB is primary
     const requiredEnvVars = ['DB_HOST', 'DB_USERNAME', 'DB_PASSWORD', 'DB_NAME'] as const;
 
-    for (const envVar of requiredEnvVars) {
-      const value = process.env[envVar];
-      if (value === undefined || value === '') {
-        throw new Error(`Missing required environment variable: ${envVar}`);
+    // Only validate PostgreSQL vars if not using just MongoDB
+    if (process.env.NODE_ENV !== 'development' || process.env.USE_POSTGRES === 'true') {
+      for (const envVar of requiredEnvVars) {
+        const value = process.env[envVar];
+        if (value === undefined || value === '') {
+          throw new Error(`Missing required environment variable: ${envVar}`);
+        }
       }
     }
 
     const dbPort = process.env.DB_PORT;
-    if (dbPort === undefined || dbPort === '' || isNaN(parseInt(dbPort, 10))) {
-      throw new Error('DB_PORT must be a valid number');
+    if (process.env.USE_POSTGRES === 'true' && (dbPort === undefined || dbPort === '' || isNaN(parseInt(dbPort, 10)))) {
+      throw new Error('DB_PORT must be a valid number when using PostgreSQL');
     }
 
     const appPort = process.env.PORT;
@@ -55,11 +63,11 @@ export class ConfigService {
           uri: process.env.MONGODB_URI ?? 'mongodb://localhost:27017/ddd_app',
         },
         postgres: {
-          host: process.env.DB_HOST as string,
-          port: parseInt(dbPort, 10),
-          username: process.env.DB_USERNAME as string,
-          password: process.env.DB_PASSWORD as string,
-          database: process.env.DB_NAME as string,
+          host: process.env.DB_HOST ?? 'localhost',
+          port: parseInt(dbPort ?? '5432', 10),
+          username: process.env.DB_USERNAME ?? 'postgres',
+          password: process.env.DB_PASSWORD ?? 'postgres',
+          database: process.env.DB_NAME ?? 'ddd_boilerplate',
         },
       },
     };
