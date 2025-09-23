@@ -2,6 +2,11 @@ import type { EventRoot } from '@shared/domain/event';
 import type { ResultSpecification } from '@shared/domain/specification';
 
 /**
+ * Event Store dependency injection token
+ */
+export const EVENT_STORE = Symbol('EVENT_STORE');
+
+/**
  * Domain Event with metadata for Event Store
  */
 export interface StoredDomainEvent extends EventRoot {

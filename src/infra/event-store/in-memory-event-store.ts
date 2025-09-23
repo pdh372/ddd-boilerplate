@@ -15,7 +15,7 @@ export class InMemoryEventStore implements IEventStore {
   private readonly snapshots: Map<string, { snapshot: Record<string, unknown>; version: number }> = new Map();
   private globalVersion = 0;
 
-  async appendEvents(
+  appendEvents(
     aggregateId: string,
     aggregateType: string,
     events: EventRoot[],
@@ -26,10 +26,12 @@ export class InMemoryEventStore implements IEventStore {
       if (expectedVersion !== undefined) {
         const currentVersion = this.getCurrentVersion(aggregateId);
         if (currentVersion !== expectedVersion) {
-          return ResultSpecification.fail({
-            errorKey: 'EVENT_STORE_CONCURRENCY_ERROR',
-            errorParam: { expected: expectedVersion, current: currentVersion },
-          });
+          return Promise.resolve(
+            ResultSpecification.fail({
+              errorKey: 'EVENT_STORE_CONCURRENCY_ERROR',
+              errorParam: { expected: expectedVersion, current: currentVersion },
+            }),
+          );
         }
       }
 
@@ -56,70 +58,75 @@ export class InMemoryEventStore implements IEventStore {
       this.globalVersion += events.length;
 
       this.logger.debug(`Appended ${events.length} events for aggregate ${aggregateId}`);
-      return ResultSpecification.ok();
+      return Promise.resolve(ResultSpecification.ok());
     } catch (error) {
       this.logger.error('Failed to append events:', error);
-      return ResultSpecification.fail({
-        errorKey: 'EVENT_STORE_APPEND_ERROR',
-        errorParam: { error: String(error) },
-      });
+      return Promise.resolve(
+        ResultSpecification.fail({
+          errorKey: 'EVENT_STORE_APPEND_ERROR',
+          errorParam: { error: String(error) },
+        }),
+      );
     }
   }
 
-  async getEventsForAggregate(
-    aggregateId: string,
-    fromVersion?: number,
-  ): Promise<ResultSpecification<StoredDomainEvent[]>> {
+  getEventsForAggregate(aggregateId: string, fromVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>> {
     try {
       const events = this.events
         .filter((event) => event.aggregateId === aggregateId)
-        .filter((event) => !fromVersion || event.eventVersion > fromVersion)
+        .filter((event) => fromVersion === undefined || event.eventVersion > fromVersion)
         .sort((a, b) => a.eventVersion - b.eventVersion);
 
       this.logger.debug(`Retrieved ${events.length} events for aggregate ${aggregateId}`);
-      return ResultSpecification.ok(events);
+      return Promise.resolve(ResultSpecification.ok(events));
     } catch (error) {
       this.logger.error('Failed to get events for aggregate:', error);
-      return ResultSpecification.fail({
-        errorKey: 'EVENT_STORE_GET_ERROR',
-        errorParam: { error: String(error) },
-      });
+      return Promise.resolve(
+        ResultSpecification.fail({
+          errorKey: 'EVENT_STORE_GET_ERROR',
+          errorParam: { error: String(error) },
+        }),
+      );
     }
   }
 
-  async getEventsByType(eventType: string, fromVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>> {
+  getEventsByType(eventType: string, fromVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>> {
     try {
       const events = this.events
         .filter((event) => event.eventType === eventType)
-        .filter((event) => !fromVersion || event.eventVersion > fromVersion)
+        .filter((event) => fromVersion === undefined || event.eventVersion > fromVersion)
         .sort((a, b) => a.eventVersion - b.eventVersion);
 
       this.logger.debug(`Retrieved ${events.length} events of type ${eventType}`);
-      return ResultSpecification.ok(events);
+      return Promise.resolve(ResultSpecification.ok(events));
     } catch (error) {
       this.logger.error('Failed to get events by type:', error);
-      return ResultSpecification.fail({
-        errorKey: 'EVENT_STORE_GET_ERROR',
-        errorParam: { error: String(error) },
-      });
+      return Promise.resolve(
+        ResultSpecification.fail({
+          errorKey: 'EVENT_STORE_GET_ERROR',
+          errorParam: { error: String(error) },
+        }),
+      );
     }
   }
 
-  async getAllEvents(fromVersion?: number, toVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>> {
+  getAllEvents(fromVersion?: number, toVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>> {
     try {
       const events = this.events
-        .filter((event) => !fromVersion || event.eventVersion > fromVersion)
-        .filter((event) => !toVersion || event.eventVersion <= toVersion)
+        .filter((event) => fromVersion === undefined || event.eventVersion > fromVersion)
+        .filter((event) => toVersion === undefined || event.eventVersion <= toVersion)
         .sort((a, b) => a.eventVersion - b.eventVersion);
 
       this.logger.debug(`Retrieved ${events.length} events from store`);
-      return ResultSpecification.ok(events);
+      return Promise.resolve(ResultSpecification.ok(events));
     } catch (error) {
       this.logger.error('Failed to get all events:', error);
-      return ResultSpecification.fail({
-        errorKey: 'EVENT_STORE_GET_ERROR',
-        errorParam: { error: String(error) },
-      });
+      return Promise.resolve(
+        ResultSpecification.fail({
+          errorKey: 'EVENT_STORE_GET_ERROR',
+          errorParam: { error: String(error) },
+        }),
+      );
     }
   }
 
@@ -147,7 +154,7 @@ export class InMemoryEventStore implements IEventStore {
     }
   }
 
-  async saveSnapshot(
+  saveSnapshot(
     aggregateId: string,
     aggregateType: string,
     snapshot: Record<string, unknown>,
@@ -156,29 +163,33 @@ export class InMemoryEventStore implements IEventStore {
     try {
       this.snapshots.set(aggregateId, { snapshot, version });
       this.logger.debug(`Saved snapshot for aggregate ${aggregateId} at version ${version}`);
-      return ResultSpecification.ok();
+      return Promise.resolve(ResultSpecification.ok());
     } catch (error) {
       this.logger.error('Failed to save snapshot:', error);
-      return ResultSpecification.fail({
-        errorKey: 'EVENT_STORE_SNAPSHOT_ERROR',
-        errorParam: { error: String(error) },
-      });
+      return Promise.resolve(
+        ResultSpecification.fail({
+          errorKey: 'EVENT_STORE_SNAPSHOT_ERROR',
+          errorParam: { error: String(error) },
+        }),
+      );
     }
   }
 
-  async getSnapshot(
+  getSnapshot(
     aggregateId: string,
   ): Promise<ResultSpecification<{ snapshot: Record<string, unknown>; version: number } | null>> {
     try {
       const snapshot = this.snapshots.get(aggregateId) ?? null;
       this.logger.debug(`Retrieved snapshot for aggregate ${aggregateId}: ${snapshot ? 'found' : 'not found'}`);
-      return ResultSpecification.ok(snapshot);
+      return Promise.resolve(ResultSpecification.ok(snapshot));
     } catch (error) {
       this.logger.error('Failed to get snapshot:', error);
-      return ResultSpecification.fail({
-        errorKey: 'EVENT_STORE_SNAPSHOT_ERROR',
-        errorParam: { error: String(error) },
-      });
+      return Promise.resolve(
+        ResultSpecification.fail({
+          errorKey: 'EVENT_STORE_SNAPSHOT_ERROR',
+          errorParam: { error: String(error) },
+        }),
+      );
     }
   }
 
