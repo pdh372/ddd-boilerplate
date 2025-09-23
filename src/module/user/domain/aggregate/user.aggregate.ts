@@ -54,7 +54,7 @@ export class UserAggregate extends AggregateRoot<IdVO> {
     const now = new Date();
 
     const userProps: IUserProps = {
-      id: IdVO.createPlaceholder(), // Let MongoDB generate ID
+      id: IdVO.createPlaceholder(),
       email: props.email,
       name: props.name,
       createdAt: now,
@@ -85,12 +85,8 @@ export class UserAggregate extends AggregateRoot<IdVO> {
       return ResultSpecification.ok<void>();
     }
 
-    // const oldName = this._props.name; // For future domain events
     this._props.name = name;
     this._props.updatedAt = new Date();
-
-    // Domain event for name change
-    // this.addDomainEvent(new UserNameChangedEvent(this, oldName, name));
 
     return ResultSpecification.ok<void>();
   }
@@ -108,12 +104,8 @@ export class UserAggregate extends AggregateRoot<IdVO> {
       return ResultSpecification.ok<void>();
     }
 
-    // const oldEmail = this._props.email; // For future domain events
     this._props.email = email;
     this._props.updatedAt = new Date();
-
-    // Domain event for email change
-    // this.addDomainEvent(new UserEmailChangedEvent(this, oldEmail, email));
 
     return ResultSpecification.ok<void>();
   }

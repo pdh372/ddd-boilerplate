@@ -6,8 +6,8 @@ type ResultState = {
 };
 
 export class ResultSpecification<T> {
-  public _state: ResultState;
-  private _value?: T;
+  private readonly _state: ResultState;
+  private readonly _value?: T;
 
   private constructor(input: ResultState, value?: T) {
     if (input.isSuccess && input.errorKey) {
