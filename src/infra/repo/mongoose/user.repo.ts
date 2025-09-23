@@ -4,6 +4,7 @@ import { Document, Model } from 'mongoose';
 import { type IUserRepository, UserAggregate } from '@module/user/domain';
 import { UserEmail, UserName } from '@module/user/domain/vo';
 import { IdVO } from '@shared/domain/vo';
+import { DomainEventPublisher } from '@shared/domain/event';
 
 @Schema({ collection: 'users' })
 export class UserDocument extends Document {
@@ -29,6 +30,7 @@ export class UserMongooseRepository implements IUserRepository {
   constructor(
     @InjectModel(UserDocument.name)
     private readonly userModel: Model<UserDocument>,
+    private readonly eventPublisher: DomainEventPublisher,
   ) {}
 
   async save(userAggregate: UserAggregate): Promise<UserAggregate> {
@@ -43,7 +45,12 @@ export class UserMongooseRepository implements IUserRepository {
       };
 
       const newDoc = await this.userModel.create(userDoc);
-      return this.toDomain(newDoc);
+      const savedUser = this.toDomain(newDoc);
+
+      // Publish domain events
+      this.eventPublisher.publishEventsForAggregate(userAggregate);
+
+      return savedUser;
     } else {
       // Existing user - update
       const updatedDoc = await this.userModel.findByIdAndUpdate(

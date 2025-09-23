@@ -4,9 +4,9 @@ import { ProductName } from '../vo';
 import { IdVO } from '@shared/domain/vo';
 
 export interface IOrderItemProps {
-  id: IdVO;
-  productId: IdVO;
-  productName: ProductName;
+  readonly id: IdVO;
+  readonly productId: IdVO;
+  readonly productName: ProductName;
   quantity: number;
   unitPrice: number;
 }
@@ -18,8 +18,24 @@ export class OrderItemEntity {
     this._props = props;
   }
 
-  get props(): IOrderItemProps {
-    return this._props;
+  get id(): IdVO {
+    return this._props.id;
+  }
+
+  get productId(): IdVO {
+    return this._props.productId;
+  }
+
+  get productName(): ProductName {
+    return this._props.productName;
+  }
+
+  get quantity(): number {
+    return this._props.quantity;
+  }
+
+  get unitPrice(): number {
+    return this._props.unitPrice;
   }
 
   get totalPrice(): number {

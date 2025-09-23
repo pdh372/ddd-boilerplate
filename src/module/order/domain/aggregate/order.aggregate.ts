@@ -15,8 +15,8 @@ export enum OrderStatus {
 }
 
 interface IOrderProps {
-  id: IdVO;
-  customerId: IdVO;
+  readonly id: IdVO;
+  readonly customerId: IdVO;
   status: OrderStatus;
   items: OrderItemEntity[];
   createdAt: Date;
@@ -135,7 +135,7 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
   }
 
   public updateItemQuantity(itemId: string, quantity: number): ResultSpecification<void> {
-    const item = this._props.items.find((item) => item.props.id.value === itemId);
+    const item = this._props.items.find((item) => item.id.value === itemId);
 
     if (!item) {
       return ResultSpecification.fail({
@@ -159,7 +159,7 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
       });
     }
 
-    const itemIndex = this._props.items.findIndex((item) => item.props.id.value === itemId);
+    const itemIndex = this._props.items.findIndex((item) => item.id.value === itemId);
 
     if (itemIndex === -1) {
       return ResultSpecification.fail({

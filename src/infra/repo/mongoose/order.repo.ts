@@ -63,10 +63,10 @@ export class OrderMongooseRepository implements IOrderRepository {
         customerId: orderAggregate.customerId.value,
         status: orderAggregate.status,
         items: orderAggregate.items.map((item) => ({
-          productId: item.props.productId.value, // Extract string from IdVO
-          productName: item.props.productName.value,
-          quantity: item.props.quantity,
-          unitPrice: item.props.unitPrice,
+          productId: item.productId.value, // Extract string from IdVO
+          productName: item.productName.value,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
         })),
         createdAt: orderAggregate.createdAt,
         updatedAt: orderAggregate.updatedAt,
@@ -81,10 +81,10 @@ export class OrderMongooseRepository implements IOrderRepository {
         {
           status: orderAggregate.status,
           items: orderAggregate.items.map((item) => ({
-            productId: item.props.productId.value, // Extract string from IdVO
-            productName: item.props.productName.value,
-            quantity: item.props.quantity,
-            unitPrice: item.props.unitPrice,
+            productId: item.productId.value, // Extract string from IdVO
+            productName: item.productName.value,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
           })),
           updatedAt: new Date(),
         },

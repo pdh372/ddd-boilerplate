@@ -6,7 +6,7 @@ import { UserCreatedEvent } from '../event';
 import { type UserEmail, type UserName } from '../vo';
 
 interface IUserProps {
-  id: IdVO;
+  readonly id: IdVO;
   email: UserEmail;
   name: UserName;
   createdAt: Date;

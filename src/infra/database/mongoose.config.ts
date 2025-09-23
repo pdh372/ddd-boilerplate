@@ -4,6 +4,7 @@ import { UserDocument, UserSchema, UserMongooseRepository } from '../repo/mongoo
 import { OrderDocument, OrderSchema, OrderMongooseRepository } from '../repo/mongoose/order.repo';
 import { USER_REPOSITORY } from '@module/user/user.token';
 import { ORDER_REPOSITORY } from '@module/order/order.token';
+import { EventInfraModule } from '../event/event.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ORDER_REPOSITORY } from '@module/order/order.token';
       { name: UserDocument.name, schema: UserSchema },
       { name: OrderDocument.name, schema: OrderSchema },
     ]),
+    EventInfraModule,
   ],
   providers: [
     {
@@ -23,6 +25,6 @@ import { ORDER_REPOSITORY } from '@module/order/order.token';
       useClass: OrderMongooseRepository,
     },
   ],
-  exports: [USER_REPOSITORY, ORDER_REPOSITORY],
+  exports: [USER_REPOSITORY, ORDER_REPOSITORY, EventInfraModule],
 })
 export class MongooseDatabaseModule {}

@@ -2,7 +2,7 @@ import { ResultSpecification } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
 interface ProductNameProps {
-  value: string;
+  readonly value: string;
 }
 
 /**
@@ -18,7 +18,7 @@ export class ProductName {
   private static readonly _MAX_LENGTH = 255;
 
   private constructor(state: ProductNameProps) {
-    this._props = state;
+    this._props = Object.freeze({ ...state });
   }
 
   get value(): string {
