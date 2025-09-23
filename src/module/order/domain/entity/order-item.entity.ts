@@ -5,7 +5,7 @@ import { IdVO } from '@shared/domain/vo';
 
 export interface IOrderItemProps {
   id: IdVO;
-  productId: string;
+  productId: IdVO;
   productName: ProductName;
   quantity: number;
   unitPrice: number;
@@ -67,7 +67,7 @@ export class OrderItemEntity {
     }
 
     const orderItem = new OrderItemEntity({
-      productId: productIdResult.getValue.value,
+      productId: productIdResult.getValue, // IdVO object, not .value
       productName: productNameResult.getValue,
       quantity: props.quantity,
       unitPrice: props.unitPrice,

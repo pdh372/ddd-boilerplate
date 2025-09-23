@@ -1,6 +1,5 @@
 import type { EventRoot } from '@shared/domain/event';
-import type { OrderAggregate } from '../aggregate/order.aggregate';
-import { OrderStatus } from '../aggregate/order.aggregate';
+import type { OrderAggregate, OrderStatus } from '../aggregate/order.aggregate';
 
 export class OrderStatusChangedEvent implements EventRoot {
   public occurredOn: Date;
@@ -16,6 +15,6 @@ export class OrderStatusChangedEvent implements EventRoot {
   }
 
   getAggregateId(): string {
-    return this.order.props.id.value;
+    return this.order.id.value;
   }
 }

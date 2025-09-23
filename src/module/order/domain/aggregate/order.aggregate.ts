@@ -26,10 +26,32 @@ interface IOrderProps {
 export class OrderAggregate extends AggregateRoot<IdVO> {
   private readonly _props: IOrderProps;
 
-  get props(): IOrderProps {
-    return this._props;
+  // Individual getters following DDD principles
+  get id(): IdVO {
+    return this._props.id;
   }
 
+  get customerId(): IdVO {
+    return this._props.customerId;
+  }
+
+  get status(): OrderStatus {
+    return this._props.status;
+  }
+
+  get items(): OrderItemEntity[] {
+    return [...this._props.items]; // Defensive copy
+  }
+
+  get createdAt(): Date {
+    return new Date(this._props.createdAt); // Defensive copy
+  }
+
+  get updatedAt(): Date {
+    return new Date(this._props.updatedAt); // Defensive copy
+  }
+
+  // Computed properties
   get totalAmount(): number {
     return this._props.items.reduce((total, item) => total + item.totalPrice, 0);
   }

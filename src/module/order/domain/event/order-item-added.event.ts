@@ -14,6 +14,6 @@ export class OrderItemAddedEvent implements EventRoot {
   }
 
   getAggregateId(): string {
-    return this.order.props.id.value;
+    return this.order.id.value;
   }
 }

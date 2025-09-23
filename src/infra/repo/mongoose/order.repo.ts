@@ -57,19 +57,19 @@ export class OrderMongooseRepository implements IOrderRepository {
 
   async save(orderAggregate: OrderAggregate): Promise<OrderAggregate> {
     // Check if this is a new order (placeholder ID) or existing order
-    if (orderAggregate.props.id.isPlaceholder()) {
+    if (orderAggregate.id.isPlaceholder()) {
       // New order - let MongoDB generate ID
       const orderDoc = {
-        customerId: orderAggregate.props.customerId.value,
-        status: orderAggregate.props.status,
-        items: orderAggregate.props.items.map((item) => ({
-          productId: item.props.productId,
+        customerId: orderAggregate.customerId.value,
+        status: orderAggregate.status,
+        items: orderAggregate.items.map((item) => ({
+          productId: item.props.productId.value, // Extract string from IdVO
           productName: item.props.productName.value,
           quantity: item.props.quantity,
           unitPrice: item.props.unitPrice,
         })),
-        createdAt: orderAggregate.props.createdAt,
-        updatedAt: orderAggregate.props.updatedAt,
+        createdAt: orderAggregate.createdAt,
+        updatedAt: orderAggregate.updatedAt,
       };
 
       const newDoc = await this.orderModel.create(orderDoc);
@@ -77,11 +77,11 @@ export class OrderMongooseRepository implements IOrderRepository {
     } else {
       // Existing order - update
       const updatedDoc = await this.orderModel.findByIdAndUpdate(
-        orderAggregate.props.id.value,
+        orderAggregate.id.value,
         {
-          status: orderAggregate.props.status,
-          items: orderAggregate.props.items.map((item) => ({
-            productId: item.props.productId,
+          status: orderAggregate.status,
+          items: orderAggregate.items.map((item) => ({
+            productId: item.props.productId.value, // Extract string from IdVO
             productName: item.props.productName.value,
             quantity: item.props.quantity,
             unitPrice: item.props.unitPrice,
@@ -124,7 +124,7 @@ export class OrderMongooseRepository implements IOrderRepository {
 
     const items = orderDoc.items.map((itemDoc) => {
       return new OrderItemEntity({
-        productId: itemDoc.productId,
+        productId: IdVO.fromValue(itemDoc.productId), // Convert string to IdVO
         productName: ProductName.fromValue(itemDoc.productName),
         quantity: itemDoc.quantity,
         unitPrice: itemDoc.unitPrice,
