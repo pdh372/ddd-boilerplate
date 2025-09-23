@@ -12,7 +12,7 @@ export interface IOrderItemProps {
 }
 
 export class OrderItemEntity {
-  private _props: IOrderItemProps;
+  private readonly _props: IOrderItemProps;
 
   constructor(props: IOrderItemProps) {
     this._props = props;
@@ -71,7 +71,7 @@ export class OrderItemEntity {
       productName: productNameResult.getValue,
       quantity: props.quantity,
       unitPrice: props.unitPrice,
-      id: IdVO.createPlaceholder(),
+      id: IdVO.generate(), // Generate UUID immediately
     });
 
     return ResultSpecification.ok(orderItem);

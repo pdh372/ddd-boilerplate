@@ -14,7 +14,7 @@ interface IUserProps {
 }
 
 export class UserAggregate extends AggregateRoot<IdVO> {
-  private _props: IUserProps;
+  private readonly _props: IUserProps;
 
   // Individual getters with defensive copying
   get id(): IdVO {
@@ -54,7 +54,7 @@ export class UserAggregate extends AggregateRoot<IdVO> {
     const now = new Date();
 
     const userProps: IUserProps = {
-      id: IdVO.createPlaceholder(),
+      id: IdVO.generate(), // Generate UUID immediately
       email: props.email,
       name: props.name,
       createdAt: now,
@@ -82,7 +82,7 @@ export class UserAggregate extends AggregateRoot<IdVO> {
 
     // Business rule: Don't update if same value
     if (this._props.name.value === name.value) {
-      return ResultSpecification.ok<void>(undefined);
+      return ResultSpecification.ok<void>();
     }
 
     // const oldName = this._props.name; // For future domain events
@@ -92,7 +92,7 @@ export class UserAggregate extends AggregateRoot<IdVO> {
     // Domain event for name change
     // this.addDomainEvent(new UserNameChangedEvent(this, oldName, name));
 
-    return ResultSpecification.ok<void>(undefined);
+    return ResultSpecification.ok<void>();
   }
 
   public updateEmail(email: UserEmail): ResultSpecification<void> {
@@ -105,7 +105,7 @@ export class UserAggregate extends AggregateRoot<IdVO> {
 
     // Business rule: Don't update if same value
     if (this._props.email.value === email.value) {
-      return ResultSpecification.ok<void>(undefined);
+      return ResultSpecification.ok<void>();
     }
 
     // const oldEmail = this._props.email; // For future domain events
@@ -115,6 +115,6 @@ export class UserAggregate extends AggregateRoot<IdVO> {
     // Domain event for email change
     // this.addDomainEvent(new UserEmailChangedEvent(this, oldEmail, email));
 
-    return ResultSpecification.ok<void>(undefined);
+    return ResultSpecification.ok<void>();
   }
 }

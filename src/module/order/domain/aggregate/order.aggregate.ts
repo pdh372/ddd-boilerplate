@@ -24,7 +24,7 @@ interface IOrderProps {
 }
 
 export class OrderAggregate extends AggregateRoot<IdVO> {
-  private _props: IOrderProps;
+  private readonly _props: IOrderProps;
 
   get props(): IOrderProps {
     return this._props;
@@ -80,7 +80,7 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
       items: orderItems,
       createdAt: now,
       updatedAt: now,
-      id: IdVO.createPlaceholder(),
+      id: IdVO.generate(), // Generate UUID immediately
     };
 
     const order = new OrderAggregate(orderProps);

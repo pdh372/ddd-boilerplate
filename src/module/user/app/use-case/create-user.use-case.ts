@@ -3,7 +3,6 @@ import type { UseCase } from '@shared/app/use-case';
 import { ResultSpecification } from '@shared/domain/specification';
 import type { ICreateUserDto } from '../dto';
 import { TRANSLATOR_KEY } from '@shared/translator';
-import { IdVO } from '@shared/domain/vo';
 
 export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate> {
   constructor(private readonly _userRepository: IUserRepository) {}

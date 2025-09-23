@@ -42,9 +42,11 @@ src/module/{context}/
 
 - Use `validate(input)` for external input (with comprehensive validation)
 - Use `fromValue(trusted)` for trusted values (DB reconstruction)
+- Use `generate()` for new unique IDs (IdVO uses UUID v4)
 - Implement `equals(other)` for value-based equality
 - Make VOs immutable (`readonly` props, freeze objects)
 - For email validation, use `validator.js`'s `isEmail()` and `normalizeEmail()` for robust, RFC-compliant checks
+- IdVO supports MongoDB ObjectId and UUID formats with automatic validation
 
 ### Critical DDD Patterns
 
@@ -67,25 +69,35 @@ return ResultSpecification.ok(value);
 
 - Domain interfaces in `src/module/{context}/domain/repo/`
 - Infrastructure implementations in `src/infra/repo/{typeorm|mongoose}/`
-- Always inject interface, not implementation
-- Mappers convert between domain aggregates and database entities
+- Always inject interface, not implementation using dependency tokens
+- Mappers convert between domain aggregates and database entities using `toDomain()` method
+- Use `Entity.fromValue()` for DB reconstruction, `Entity.validate()` for external input
 
 ### Use Case Pattern
 
-All business logic flows through use cases implementing `UseCase<IRequest, IResponse>`: const result = await useCase.execute(input); if (result.isFailure) { return ResultSpecification.fail({ errorKey: 'ERROR_KEY', errorParam: {...} }); } return ResultSpecification.ok(result.getValue);
+All business logic flows through use cases implementing `UseCase<IRequest, IResponse>`:
 
 ```typescript
 export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate> {
   async execute(input: ICreateUserDto): Promise<ResultSpecification<UserAggregate>> {
-    // Validate inputs using VO.validate()
-    // Check business rules
-    // Save via repository
-    // Return ResultSpecification
+    // 1. Validate inputs using VO.validate()
+    const email = UserEmail.validate(input.email);
+    if (email.isFailure) return ResultSpecification.fail(email.error);
+
+    // 2. Check business rules (e.g., uniqueness)
+    const existing = await this.repository.findByEmail(email.getValue);
+    if (existing) return ResultSpecification.fail({ errorKey: 'EMAIL_EXISTS' });
+
+    // 3. Create aggregate and save
+    const user = UserAggregate.create({ email: email.getValue, name: name.getValue });
+    if (user.isFailure) return user;
+
+    return ResultSpecification.ok(await this.repository.save(user.getValue));
   }
 }
 ```
 
-```
+````
 
 ## Path Aliases (tsconfig.json)
 
@@ -114,23 +126,51 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
 ## Common Implementation Patterns
 
 **Adding New Features**:
-1. Start with domain: aggregate, value objects, events, repo interface
-2. Create use cases in application layer
-3. Implement repository in infrastructure
-4. Add controller in presentation layer
-5. Wire dependencies in NestJS modules
-6. Register use case factories in `@infra/use-case/index.ts`
-7. Import module in `presentation.module.ts`
+1. **Domain first**: Create aggregate, value objects, events, repository interface in `src/module/{context}/domain/`
+2. **Application layer**: Add use cases and DTOs in `src/module/{context}/app/`
+3. **Infrastructure**: Implement repository in `src/infra/repo/{typeorm|mongoose}/`
+4. **Dependency tokens**: Create token symbols in `src/module/{context}/{context}.token.ts`
+5. **Use case factories**: Register in `@infra/use-case/index.ts` with proper injection
+6. **Presentation**: Add controller in `src/presentation/web/{context}/`
+7. **Module wiring**: Create NestJS module with providers from `USE_CASE` factory
+8. **Global import**: Add new module to `src/presentation/presentation.module.ts`
 
-**Error Handling**: Use `TRANSLATOR_KEY` constants and `ResultSpecification` pattern throughout. Controllers translate domain errors to HTTP responses using `AcceptLanguage` decorator.
+**Error Handling**: Use `TRANSLATOR_KEY` constants and `ResultSpecification` pattern throughout. Controllers translate domain errors to HTTP responses using `AcceptLanguage` decorator:
+
+```typescript
+if (result.isFailure) {
+  throw new HttpException(
+    acceptLanguage({ key: result.errorKey, param: result.errorParam }),
+    ERROR_STATUS_CODE[result.errorKey]
+  );
+}
+````
 
 **Domain Events**: Add via aggregate's `addDomainEvent()`, clear after persistence. Infrastructure handles event publishing.
 
 **Best Practices**:
+
 - Never expose internal props of aggregates/entities directly; use individual getters
 - Always use professional validation libraries (e.g. `validator.js`) for VOs
 - Keep all mutations inside aggregates, not outside
 - Make VOs and entities immutable where possible
 
+**Dependency Injection Pattern**: Use factory pattern in `@infra/use-case/index.ts`:
+
+```typescript
+export const USE_CASE = {
+  USER: {
+    CREATE_USER: {
+      provide: CreateUserUseCase,
+      inject: [USER_REPOSITORY],
+      useFactory: (userRepo: IUserRepository) => new CreateUserUseCase(userRepo),
+    },
+  },
+};
+```
+
 When extending this codebase, maintain strict layer boundaries and follow the established factory patterns for consistent domain modeling.
+
+```
+
 ```
