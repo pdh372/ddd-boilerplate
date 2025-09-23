@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UserModule } from './web/user/user.module';
+import { OrderModule } from './web/order/order.module';
 import { DatabaseInfra } from '@infra/database/database.factory';
 
 @Module({
@@ -9,6 +10,7 @@ import { DatabaseInfra } from '@infra/database/database.factory';
 
     // Modules
     UserModule,
+    OrderModule,
   ],
 })
 export class AppModule {}

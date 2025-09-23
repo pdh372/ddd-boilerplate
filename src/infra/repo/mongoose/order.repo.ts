@@ -56,21 +56,47 @@ export class OrderMongooseRepository implements IOrderRepository {
   ) {}
 
   async save(orderAggregate: OrderAggregate): Promise<OrderAggregate> {
-    const orderDoc = {
-      customerId: orderAggregate.props.customerId,
-      status: orderAggregate.props.status,
-      items: orderAggregate.props.items.map((item) => ({
-        productId: item.props.productId,
-        productName: item.props.productName.value,
-        quantity: item.props.quantity,
-        unitPrice: item.props.unitPrice,
-      })),
-      createdAt: orderAggregate.props.createdAt,
-      updatedAt: orderAggregate.props.updatedAt,
-    };
+    // Check if this is a new order (placeholder ID) or existing order
+    if (orderAggregate.props.id.isPlaceholder()) {
+      // New order - let MongoDB generate ID
+      const orderDoc = {
+        customerId: orderAggregate.props.customerId.value,
+        status: orderAggregate.props.status,
+        items: orderAggregate.props.items.map((item) => ({
+          productId: item.props.productId,
+          productName: item.props.productName.value,
+          quantity: item.props.quantity,
+          unitPrice: item.props.unitPrice,
+        })),
+        createdAt: orderAggregate.props.createdAt,
+        updatedAt: orderAggregate.props.updatedAt,
+      };
 
-    const newDoc = await this.orderModel.create(orderDoc);
-    return this.toDomain(newDoc);
+      const newDoc = await this.orderModel.create(orderDoc);
+      return this.toDomain(newDoc);
+    } else {
+      // Existing order - update
+      const updatedDoc = await this.orderModel.findByIdAndUpdate(
+        orderAggregate.props.id.value,
+        {
+          status: orderAggregate.props.status,
+          items: orderAggregate.props.items.map((item) => ({
+            productId: item.props.productId,
+            productName: item.props.productName.value,
+            quantity: item.props.quantity,
+            unitPrice: item.props.unitPrice,
+          })),
+          updatedAt: new Date(),
+        },
+        { new: true },
+      );
+
+      if (!updatedDoc) {
+        throw new Error('Order not found for update');
+      }
+
+      return this.toDomain(updatedDoc);
+    }
   }
 
   async findById(id: IdVO): Promise<OrderAggregate | null> {

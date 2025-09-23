@@ -1,18 +1,29 @@
-import { Controller, Post, Get, Body, Param, HttpException } from '@nestjs/common';
-import { CreateOrderUseCase, GetOrderUseCase } from '@module/order/app/use-case';
+import { Controller, Post, Get, Put, Body, Param, HttpException } from '@nestjs/common';
+import {
+  CreateOrderUseCase,
+  GetOrderUseCase,
+  UpdateOrderItemQuantityUseCase,
+  AddOrderItemUseCase,
+} from '@module/order/app/use-case';
 import { AcceptLanguage, IAcceptLanguageContext } from '@shared/decorator';
-import { CreateOrderDto } from './dto';
+import { CreateOrderDto, AddOrderItemDto, OrderResponseDto } from './dto';
 import { ERROR_STATUS_CODE } from '@shared/translator';
+import { OrderMapper } from './mapper';
 
 @Controller('order')
 export class OrderController {
   constructor(
     private readonly _createOrderUseCase: CreateOrderUseCase,
     private readonly _getOrderUseCase: GetOrderUseCase,
+    private readonly _updateOrderItemQuantityUseCase: UpdateOrderItemQuantityUseCase,
+    private readonly _addOrderItemUseCase: AddOrderItemUseCase,
   ) {}
 
   @Post()
-  async createOrder(@Body() body: CreateOrderDto, @AcceptLanguage() acceptLanguage: IAcceptLanguageContext) {
+  async createOrder(
+    @Body() body: CreateOrderDto,
+    @AcceptLanguage() acceptLanguage: IAcceptLanguageContext,
+  ): Promise<OrderResponseDto> {
     const result = await this._createOrderUseCase.execute(body);
 
     if (result.isFailure) {
@@ -22,29 +33,14 @@ export class OrderController {
       );
     }
 
-    const order = result.getValue;
-
-    return {
-      id: order.props.id,
-      customerId: order.props.customerId,
-      status: order.props.status,
-      totalAmount: order.totalAmount,
-      itemCount: order.itemCount,
-      items: order.props.items.map((item) => ({
-        id: item.props.id,
-        productId: item.props.productId,
-        productName: item.props.productName,
-        quantity: item.props.quantity,
-        unitPrice: item.props.unitPrice,
-        totalPrice: item.totalPrice,
-      })),
-      createdAt: order.props.createdAt,
-      updatedAt: order.props.updatedAt,
-    };
+    return OrderMapper.toResponseDto(result.getValue);
   }
 
   @Get(':id')
-  async getOrder(@Param('id') id: string, @AcceptLanguage() acceptLanguage: IAcceptLanguageContext) {
+  async getOrder(
+    @Param('id') id: string,
+    @AcceptLanguage() acceptLanguage: IAcceptLanguageContext,
+  ): Promise<OrderResponseDto> {
     const result = await this._getOrderUseCase.execute({ orderId: id });
 
     if (result.isFailure) {
@@ -54,24 +50,53 @@ export class OrderController {
       );
     }
 
-    const order = result.getValue;
+    return OrderMapper.toResponseDto(result.getValue);
+  }
 
-    return {
-      id: order.props.id,
-      customerId: order.props.customerId,
-      status: order.props.status,
-      totalAmount: order.totalAmount,
-      itemCount: order.itemCount,
-      items: order.props.items.map((item) => ({
-        id: item.props.id,
-        productId: item.props.productId,
-        productName: item.props.productName,
-        quantity: item.props.quantity,
-        unitPrice: item.props.unitPrice,
-        totalPrice: item.totalPrice,
-      })),
-      createdAt: order.props.createdAt,
-      updatedAt: order.props.updatedAt,
-    };
+  @Put(':id/items/:itemId/quantity')
+  async updateItemQuantity(
+    @Param('id') orderId: string,
+    @Param('itemId') itemId: string,
+    @Body() body: { quantity: number },
+    @AcceptLanguage() acceptLanguage: IAcceptLanguageContext,
+  ): Promise<OrderResponseDto> {
+    const result = await this._updateOrderItemQuantityUseCase.execute({
+      orderId,
+      itemId,
+      quantity: body.quantity,
+    });
+
+    if (result.isFailure) {
+      throw new HttpException(
+        acceptLanguage({ key: result.errorKey, param: result.errorParam }),
+        ERROR_STATUS_CODE[result.errorKey],
+      );
+    }
+
+    return OrderMapper.toResponseDto(result.getValue);
+  }
+
+  @Post(':id/items')
+  async addItem(
+    @Param('id') orderId: string,
+    @Body() body: AddOrderItemDto,
+    @AcceptLanguage() acceptLanguage: IAcceptLanguageContext,
+  ): Promise<OrderResponseDto> {
+    const result = await this._addOrderItemUseCase.execute({
+      orderId,
+      productId: body.productId,
+      productName: body.productName,
+      quantity: body.quantity,
+      unitPrice: body.unitPrice,
+    });
+
+    if (result.isFailure) {
+      throw new HttpException(
+        acceptLanguage({ key: result.errorKey, param: result.errorParam }),
+        ERROR_STATUS_CODE[result.errorKey],
+      );
+    }
+
+    return OrderMapper.toResponseDto(result.getValue);
   }
 }
