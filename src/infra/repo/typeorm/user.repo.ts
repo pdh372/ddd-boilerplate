@@ -32,15 +32,34 @@ export class UserTypeOrmRepository implements IUserRepository {
   ) {}
 
   async save(entity: UserAggregate): Promise<UserAggregate> {
-    const userEntity = new UserEntity();
+    // Check if this is a new user (placeholder ID) or existing user
+    if (entity.id.isPlaceholder()) {
+      // New user - let TypeORM generate ID
+      const userEntity = new UserEntity();
+      userEntity.email = entity.email.value;
+      userEntity.name = entity.name.value;
+      userEntity.createdAt = entity.createdAt;
+      userEntity.updatedAt = entity.updatedAt;
 
-    userEntity.email = entity.email.value;
-    userEntity.name = entity.name.value;
-    userEntity.createdAt = entity.createdAt;
-    userEntity.updatedAt = entity.updatedAt;
+      const savedEntity = await this.userRepository.save(userEntity);
+      return this.toDomain(savedEntity);
+    } else {
+      // Existing user - update by ID
+      const existingEntity = await this.userRepository.findOne({
+        where: { id: entity.id.value },
+      });
 
-    const savedEntity = await this.userRepository.save(userEntity);
-    return this.toDomain(savedEntity);
+      if (!existingEntity) {
+        throw new Error('User not found for update');
+      }
+
+      existingEntity.email = entity.email.value;
+      existingEntity.name = entity.name.value;
+      existingEntity.updatedAt = new Date();
+
+      const updatedEntity = await this.userRepository.save(existingEntity);
+      return this.toDomain(updatedEntity);
+    }
   }
 
   async findById(id: IdVO): Promise<UserAggregate | null> {

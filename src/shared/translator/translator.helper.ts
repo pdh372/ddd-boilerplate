@@ -13,7 +13,7 @@ export interface ITranslatorInterpolateInput {
 
 @Injectable()
 export class TranslatorHelper {
-  private _translation: { [key: string]: { [key: string]: string } } = TRANSLATOR_MESSAGE;
+  private readonly _translation: { [key: string]: { [key: string]: string } } = TRANSLATOR_MESSAGE;
   private _currentLanguage: ConstValue<typeof LANGUAGE_TYPE> = LANGUAGE_TYPE.EN;
 
   constructor() {}
@@ -34,7 +34,7 @@ export class TranslatorHelper {
   translate(input: ITranslatorInput): string {
     const language = this._currentLanguage;
 
-    if (!this._translation[input.key] || !this._translation[input.key]?.[language]) {
+    if (!this._translation[input.key]?.[language]) {
       throw new Error(`Translation for key "${input.key}" not found in language "${language}"`);
     }
 

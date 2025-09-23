@@ -80,7 +80,7 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
       items: orderItems,
       createdAt: now,
       updatedAt: now,
-      id: IdVO.generate(), // Generate UUID immediately
+      id: IdVO.createPlaceholder(), // Let MongoDB generate ID
     };
 
     const order = new OrderAggregate(orderProps);

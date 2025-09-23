@@ -18,8 +18,8 @@ export const TRANSLATOR_MESSAGE: Record<
     [LANGUAGE_TYPE.VI]: 'Định dạng email không hợp lệ',
   },
   [TRANSLATOR_KEY.ERROR__USER__INVALID_NAME]: {
-    [LANGUAGE_TYPE.EN]: 'Name must be at least {{min_length}} character',
-    [LANGUAGE_TYPE.VI]: 'Tên phải có ít nhất {{min_length}} ký tự',
+    [LANGUAGE_TYPE.EN]: 'Name must be between {{min_length}} and {{max_length}} characters',
+    [LANGUAGE_TYPE.VI]: 'Tên phải có từ {{min_length}} đến {{max_length}} ký tự',
   },
 
   // ORDER

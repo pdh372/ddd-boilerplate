@@ -54,7 +54,7 @@ export class UserAggregate extends AggregateRoot<IdVO> {
     const now = new Date();
 
     const userProps: IUserProps = {
-      id: IdVO.generate(), // Generate UUID immediately
+      id: IdVO.createPlaceholder(), // Let MongoDB generate ID
       email: props.email,
       name: props.name,
       createdAt: now,

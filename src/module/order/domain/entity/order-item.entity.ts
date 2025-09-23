@@ -71,7 +71,7 @@ export class OrderItemEntity {
       productName: productNameResult.getValue,
       quantity: props.quantity,
       unitPrice: props.unitPrice,
-      id: IdVO.generate(), // Generate UUID immediately
+      id: IdVO.createPlaceholder(), // Let MongoDB generate ID
     });
 
     return ResultSpecification.ok(orderItem);

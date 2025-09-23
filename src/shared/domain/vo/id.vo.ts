@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { v4 as uuid4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import { ResultSpecification } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
@@ -14,6 +14,7 @@ interface IIdProps {
  * - generate(): Creates new UUID for new entities
  * - validate(value): Validates external input (API, forms)
  * - fromValue(value): Creates from database without validation
+ * - createPlaceholder(): Temporary ID for new aggregates (MongoDB will generate real ID)
  */
 export class IdVO {
   private readonly _props: IIdProps;
@@ -37,11 +38,15 @@ export class IdVO {
     return this._props.value;
   }
 
+  public isPlaceholder(): boolean {
+    return this._props.value === 'PENDING_DB_GENERATION';
+  }
+
   /**
-   * Generate new UUID for new entities
+   * Generate new UUID for new entities (if not using DB-generated IDs)
    */
   public static generate(): IdVO {
-    return new IdVO({ value: uuid4() });
+    return new IdVO({ value: uuidv4() });
   }
 
   /**
@@ -71,6 +76,13 @@ export class IdVO {
     return ResultSpecification.fail<IdVO>({
       errorKey: TRANSLATOR_KEY.ERROR__COMMON__INVALID_ID,
     });
+  }
+
+  /**
+   * Placeholder for new aggregates - MongoDB will generate real ID
+   */
+  public static createPlaceholder(): IdVO {
+    return new IdVO({ value: 'PENDING_DB_GENERATION' });
   }
 
   private static isValidUUID(value: string): boolean {

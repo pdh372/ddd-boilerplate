@@ -4,7 +4,7 @@ import { Document, Model } from 'mongoose';
 import { type IOrderRepository, OrderAggregate, OrderStatus } from '@module/order/domain';
 import { ProductName } from '@module/order/domain/vo';
 import { OrderItemEntity } from '@module/order/domain/entity';
-import { IdVO } from '../../../shared/domain/vo';
+import { IdVO } from '@shared/domain/vo';
 
 @Schema()
 export class OrderItemDocument {
