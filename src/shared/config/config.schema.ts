@@ -16,17 +16,19 @@ export const ConfigSchema = z.object({
       message: 'Port must be between 1 and 65535',
     }),
 
-  // Database Configuration
-  DB_HOST: z.string().min(1, 'Database host is required'),
+  // Database Configuration (PostgreSQL - optional for development)
+  DB_HOST: z.string().min(1, 'Database host is required').optional().default('localhost'),
   DB_PORT: z
     .string()
+    .optional()
+    .default('5432')
     .transform((val) => parseInt(val, 10))
     .refine((port) => port > 0 && port < 65536, {
       message: 'Database port must be between 1 and 65535',
     }),
-  DB_USERNAME: z.string().min(1, 'Database username is required'),
-  DB_PASSWORD: z.string().min(1, 'Database password is required'),
-  DB_NAME: z.string().min(1, 'Database name is required'),
+  DB_USERNAME: z.string().min(1, 'Database username is required').optional().default('postgres'),
+  DB_PASSWORD: z.string().min(1, 'Database password is required').optional().default('postgres'),
+  DB_NAME: z.string().min(1, 'Database name is required').optional().default('ddd_boilerplate'),
 
   // MongoDB Configuration
   MONGODB_URI: z.string().min(1).optional().default('mongodb://localhost:27017/ddd_app'),

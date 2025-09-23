@@ -21,6 +21,10 @@ export const TRANSLATOR_MESSAGE: Record<
     [LANGUAGE_TYPE.EN]: 'Name must be between {{min_length}} and {{max_length}} characters',
     [LANGUAGE_TYPE.VI]: 'Tên phải có từ {{min_length}} đến {{max_length}} ký tự',
   },
+  [TRANSLATOR_KEY.ERROR__USER__CHECK_FAILED]: {
+    [LANGUAGE_TYPE.EN]: 'Failed to validate user eligibility',
+    [LANGUAGE_TYPE.VI]: 'Không thể kiểm tra tính hợp lệ của người dùng',
+  },
 
   // ORDER
   [TRANSLATOR_KEY.ERROR__ORDER__INVALID_QUANTITY]: {
@@ -55,10 +59,36 @@ export const TRANSLATOR_MESSAGE: Record<
     [LANGUAGE_TYPE.EN]: 'Product name must be between 1 and 255 characters',
     [LANGUAGE_TYPE.VI]: 'Tên sản phẩm phải từ 1 đến 255 ký tự',
   },
+  [TRANSLATOR_KEY.ERROR__ORDER__CREATION_FAILED]: {
+    [LANGUAGE_TYPE.EN]: 'Failed to create order',
+    [LANGUAGE_TYPE.VI]: 'Không thể tạo đơn hàng',
+  },
+  [TRANSLATOR_KEY.ERROR__ORDER__ITEMS_CREATION_FAILED]: {
+    [LANGUAGE_TYPE.EN]: 'Failed to create order items',
+    [LANGUAGE_TYPE.VI]: 'Không thể tạo sản phẩm trong đơn hàng',
+  },
 
   // COMMON
   [TRANSLATOR_KEY.ERROR__COMMON__INVALID_ID]: {
     [LANGUAGE_TYPE.EN]: 'Invalid user ID',
     [LANGUAGE_TYPE.VI]: 'ID người dùng không hợp lệ',
+  },
+
+  // EVENT STORE
+  [TRANSLATOR_KEY.ERROR__EVENT_STORE__CONCURRENCY_ERROR]: {
+    [LANGUAGE_TYPE.EN]: 'Concurrency conflict detected',
+    [LANGUAGE_TYPE.VI]: 'Phát hiện xung đột phiên bản',
+  },
+  [TRANSLATOR_KEY.ERROR__EVENT_STORE__APPEND_ERROR]: {
+    [LANGUAGE_TYPE.EN]: 'Failed to append events',
+    [LANGUAGE_TYPE.VI]: 'Không thể lưu sự kiện',
+  },
+  [TRANSLATOR_KEY.ERROR__EVENT_STORE__GET_ERROR]: {
+    [LANGUAGE_TYPE.EN]: 'Failed to retrieve events',
+    [LANGUAGE_TYPE.VI]: 'Không thể lấy sự kiện',
+  },
+  [TRANSLATOR_KEY.ERROR__EVENT_STORE__SNAPSHOT_ERROR]: {
+    [LANGUAGE_TYPE.EN]: 'Failed to manage snapshot',
+    [LANGUAGE_TYPE.VI]: 'Không thể quản lý bản chụp',
   },
 } as const;

@@ -17,6 +17,17 @@ export const TRANSLATOR_KEY = {
   ERROR__ORDER__INVALID_STATUS_TRANSITION: 'error.order.invalid_status_transition',
   ERROR__ORDER__NOT_FOUND: 'error.order.not_found',
   ERROR__ORDER__INVALID_PRODUCT_NAME: 'error.order.invalid_product_name',
+  ERROR__ORDER__CREATION_FAILED: 'error.order.creation_failed',
+  ERROR__ORDER__ITEMS_CREATION_FAILED: 'error.order.items_creation_failed',
 
   ERROR__COMMON__INVALID_ID: 'error.common.invalid_id',
+
+  // Event Store errors
+  ERROR__EVENT_STORE__CONCURRENCY_ERROR: 'error.event_store.concurrency_error',
+  ERROR__EVENT_STORE__APPEND_ERROR: 'error.event_store.append_error',
+  ERROR__EVENT_STORE__GET_ERROR: 'error.event_store.get_error',
+  ERROR__EVENT_STORE__SNAPSHOT_ERROR: 'error.event_store.snapshot_error',
+
+  // Domain Service errors
+  ERROR__USER__CHECK_FAILED: 'error.user.check_failed',
 } as const;
