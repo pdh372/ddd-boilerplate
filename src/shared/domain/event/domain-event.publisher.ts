@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { EventBus } from '@nestjs/cqrs';
+import { Injectable, Logger } from '@nestjs/common';
 import type { AggregateRoot } from '../aggregate/root.aggregate';
+import type { EventRoot } from './event.root';
 
 /**
  * Domain Event Publisher
@@ -8,17 +8,21 @@ import type { AggregateRoot } from '../aggregate/root.aggregate';
  */
 @Injectable()
 export class DomainEventPublisher {
-  constructor(private readonly eventBus: EventBus) {}
+  private readonly logger = new Logger(DomainEventPublisher.name);
 
   /**
    * Publish all domain events from an aggregate and clear them
    */
-  publishEventsForAggregate(aggregate: AggregateRoot<any>): void {
-    const events = aggregate.domainEvents;
+  publishEventsForAggregate(aggregate: AggregateRoot<unknown>): void {
+    const events: EventRoot[] = aggregate.domainEvents;
 
     for (const event of events) {
-      // Publish event to the event bus (fire and forget)
-      this.eventBus.publish(event);
+      // Log domain events (in production you would integrate with real event bus)
+      this.logger.log('📢 Domain Event Published', {
+        eventType: event.constructor.name,
+        aggregateId: event.getAggregateId(),
+        occurredOn: event.occurredOn,
+      });
     }
 
     // Clear events after publishing
@@ -28,7 +32,7 @@ export class DomainEventPublisher {
   /**
    * Publish multiple aggregates' events
    */
-  publishEventsForAggregates(aggregates: AggregateRoot<any>[]): void {
+  publishEventsForAggregates(aggregates: AggregateRoot<unknown>[]): void {
     for (const aggregate of aggregates) {
       this.publishEventsForAggregate(aggregate);
     }

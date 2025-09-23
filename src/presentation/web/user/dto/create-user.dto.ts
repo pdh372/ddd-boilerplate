@@ -3,8 +3,8 @@ import { IsString } from 'class-validator';
 
 export class CreateUserDto implements ICreateUserDto {
   @IsString()
-  email: string;
+  email!: string;
 
   @IsString()
-  name: string;
+  name!: string;
 }

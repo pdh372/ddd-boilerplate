@@ -1,1 +1,1 @@
-export * from './create-order.dto';
+export type * from './create-order.dto';

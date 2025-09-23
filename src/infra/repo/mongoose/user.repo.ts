@@ -11,16 +11,16 @@ export class UserDocument extends Document {
   declare _id: string;
 
   @Prop({ required: true, unique: true })
-  email: string;
+  email!: string;
 
   @Prop({ required: true })
-  name: string;
+  name!: string;
 
   @Prop({ default: Date.now })
-  createdAt: Date;
+  createdAt!: Date;
 
   @Prop({ default: Date.now })
-  updatedAt: Date;
+  updatedAt!: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserDocument);

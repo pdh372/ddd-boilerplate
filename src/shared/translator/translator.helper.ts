@@ -4,11 +4,11 @@ import { TRANSLATOR_MESSAGE } from './translator.message';
 
 export interface ITranslatorInput {
   key: string;
-  param?: Record<string, string>;
+  param?: Record<string, string | number | boolean>;
 }
 
 export interface ITranslatorInterpolateInput {
-  [key: string]: string;
+  [key: string]: string | number | boolean;
 }
 
 @Injectable()
@@ -34,13 +34,17 @@ export class TranslatorHelper {
   translate(input: ITranslatorInput): string {
     const language = this._currentLanguage;
 
-    if (!this._translation[input.key]?.[language]) {
+    const translationForKey = this._translation[input.key];
+    if (translationForKey === undefined) {
+      throw new Error(`Translation for key "${input.key}" not found`);
+    }
+
+    const translation = translationForKey[language];
+    if (translation === undefined) {
       throw new Error(`Translation for key "${input.key}" not found in language "${language}"`);
     }
 
-    const translation = this._translation[input.key][language];
-
-    if (input.param) {
+    if (input.param !== undefined) {
       return this.interpolate(translation, input.param);
     }
 
@@ -49,7 +53,8 @@ export class TranslatorHelper {
 
   private interpolate(template: string, params: ITranslatorInterpolateInput): string {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) => {
-      return params[key]?.toString() || match;
+      const value = params[key];
+      return value != null ? value.toString() : match;
     });
   }
 }

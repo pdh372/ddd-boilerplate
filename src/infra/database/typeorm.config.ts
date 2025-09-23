@@ -2,22 +2,27 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity, UserTypeOrmRepository } from '../repo/typeorm/user.repo';
 import { USER_REPOSITORY } from '@module/user/user.token';
+import { ConfigService } from '@shared/config';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres', // or your preferred database
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '') || 5432,
-      username: process.env.DB_USERNAME || 'huypd',
-      password: process.env.DB_PASSWORD || 'huypd',
-      database: process.env.DB_NAME || 'huypd',
-      entities: [UserEntity],
-      synchronize: process.env.NODE_ENV !== 'production',
+    TypeOrmModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres' as const,
+        host: configService.database.postgres.host,
+        port: configService.database.postgres.port,
+        username: configService.database.postgres.username,
+        password: configService.database.postgres.password,
+        database: configService.database.postgres.database,
+        entities: [UserEntity],
+        synchronize: !configService.isProduction,
+      }),
+      inject: [ConfigService],
     }),
     TypeOrmModule.forFeature([UserEntity]),
   ],
   providers: [
+    ConfigService,
     {
       provide: USER_REPOSITORY,
       useClass: UserTypeOrmRepository,

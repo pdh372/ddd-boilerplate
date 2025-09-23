@@ -1,69 +1,74 @@
-type ResultState = {
-  isSuccess: boolean;
-  isFailure: boolean;
+export interface IErrorSpecification {
   errorKey: string;
-  errorParam: Record<string, any>;
-};
+  errorParam?: Record<string, string | number | boolean>;
+}
 
 export class ResultSpecification<T> {
-  private readonly _state: ResultState;
-  private readonly _value?: T;
+  public readonly isSuccess: boolean;
+  public readonly isFailure: boolean;
+  private readonly _value: T | undefined;
+  private readonly _error: IErrorSpecification | undefined;
 
-  private constructor(input: ResultState, value?: T) {
-    if (input.isSuccess && input.errorKey) {
-      throw new Error('error.result.success_with_error');
+  constructor(isSuccess: boolean, error?: IErrorSpecification, value?: T) {
+    if (isSuccess && error) {
+      throw new Error('InvalidOperation: A result cannot be successful and contain an error');
     }
-    if (!input.isSuccess && !input.errorKey) {
-      throw new Error('error.result.failure_without_error');
+    if (!isSuccess && !error) {
+      throw new Error('InvalidOperation: A failing result needs to contain an error message');
     }
 
-    this._state = input;
+    this.isSuccess = isSuccess;
+    this.isFailure = !isSuccess;
+    this._error = error;
     this._value = value;
 
     Object.freeze(this);
   }
 
-  public get errorKey(): string {
-    return this._state.errorKey;
-  }
-
-  public get errorParam(): Record<string, any> {
-    return this._state.errorParam;
-  }
-
-  public get isFailure(): boolean {
-    return !!this._state.isFailure;
-  }
-
   public get getValue(): T {
-    if (!this._state.isSuccess) {
-      throw new Error('error.result.cannot_get_value');
+    if (!this.isSuccess) {
+      throw new Error('Can not get value of an error result. Use getError() instead.');
     }
 
     return this._value as T;
   }
 
-  public get error(): Pick<ResultState, 'errorKey' | 'errorParam'> {
-    if (!this._state.errorKey) {
-      throw new Error('error.result.cannot_get_error');
+  public get errorKey(): string {
+    if (this.isSuccess) {
+      throw new Error('Can not get error of a successful result.');
     }
 
-    return {
-      errorKey: this._state.errorKey,
-      errorParam: this._state.errorParam,
-    };
+    return this._error?.errorKey ?? '';
+  }
+
+  public get errorParam(): Record<string, string | number | boolean> {
+    if (this.isSuccess) {
+      throw new Error('Can not get error param of a successful result.');
+    }
+
+    return this._error?.errorParam ?? {};
+  }
+
+  public get error(): IErrorSpecification {
+    if (this.isSuccess) {
+      throw new Error('Can not get error of a successful result.');
+    }
+
+    return this._error as IErrorSpecification;
   }
 
   public static ok<U>(value?: U): ResultSpecification<U> {
-    return new ResultSpecification<U>({ isSuccess: true, isFailure: false, errorKey: '', errorParam: {} }, value);
+    return new ResultSpecification<U>(true, undefined, value);
   }
 
-  public static fail<U>(input: { errorKey: string; errorParam?: Record<string, any> }): ResultSpecification<U> {
-    return new ResultSpecification<U>({
-      isSuccess: false,
-      isFailure: true,
-      errorKey: input.errorKey,
-      errorParam: input.errorParam ?? {},
-    });
+  public static fail<U>(input: IErrorSpecification): ResultSpecification<U> {
+    return new ResultSpecification<U>(false, input);
+  }
+
+  public static combine(results: ResultSpecification<unknown>[]): ResultSpecification<null> {
+    for (const result of results) {
+      if (result.isFailure) return result as ResultSpecification<null>;
+    }
+    return ResultSpecification.ok<null>();
   }
 }

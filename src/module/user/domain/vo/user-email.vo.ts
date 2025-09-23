@@ -8,19 +8,19 @@ interface IUserEmailProps {
 
 /**
  * User Email Value Object following DDD principles
- * 
+ *
  * Characteristics:
  * - Immutable: Cannot be changed after creation
  * - Self-validating: Ensures email format correctness
  * - Equality by value: Two emails with same value are equal
- * 
+ *
  * Factory Methods:
  * - validate(email): Validates and creates from external input with comprehensive validation
  * - fromValue(email): Creates from trusted source without validation (for DB reconstruction)
  */
 export class UserEmail {
   private readonly _props: IUserEmailProps;
-  
+
   // Constants for validation rules
   private static readonly MAX_LENGTH = 254; // RFC 5321 limit
   private static readonly MIN_LENGTH = 5; // a@b.c minimum
@@ -41,7 +41,7 @@ export class UserEmail {
   /**
    * Value Object equality - compares by value, not reference
    * This is essential for Value Object semantics in DDD
-   * 
+   *
    * @param other - Another UserEmail instance to compare with
    * @returns true if both emails have the same value
    */
@@ -71,13 +71,13 @@ export class UserEmail {
   /**
    * Validates and creates UserEmail from external/untrusted input
    * Uses validator.js library for robust, RFC-compliant email validation
-   * 
+   *
    * Use cases:
    * - User registration forms
-   * - Profile updates  
+   * - Profile updates
    * - API requests
    * - Any external data source
-   * 
+   *
    * @param email - Raw email string from external source
    * @returns ResultSpecification containing UserEmail or validation error
    */
@@ -86,7 +86,7 @@ export class UserEmail {
     if (!email || typeof email !== 'string') {
       return ResultSpecification.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
-        errorParam: { reason: 'Email is required' }
+        errorParam: { reason: 'Email is required' },
       });
     }
 
@@ -97,7 +97,7 @@ export class UserEmail {
     if (trimmedEmail.length === 0) {
       return ResultSpecification.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
-        errorParam: { reason: 'Email cannot be empty' }
+        errorParam: { reason: 'Email cannot be empty' },
       });
     }
 
@@ -105,14 +105,14 @@ export class UserEmail {
     if (trimmedEmail.length < this.MIN_LENGTH) {
       return ResultSpecification.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
-        errorParam: { reason: `Email too short (minimum ${this.MIN_LENGTH} characters)` }
+        errorParam: { reason: `Email too short (minimum ${this.MIN_LENGTH} characters)` },
       });
     }
 
     if (trimmedEmail.length > this.MAX_LENGTH) {
       return ResultSpecification.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
-        errorParam: { reason: `Email too long (maximum ${this.MAX_LENGTH} characters)` }
+        errorParam: { reason: `Email too long (maximum ${this.MAX_LENGTH} characters)` },
       });
     }
 
@@ -120,7 +120,7 @@ export class UserEmail {
     if (!isEmail(trimmedEmail)) {
       return ResultSpecification.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
-        errorParam: { reason: 'Invalid email format' }
+        errorParam: { reason: 'Invalid email format' },
       });
     }
 
@@ -132,13 +132,13 @@ export class UserEmail {
       gmail_convert_googlemaildotcom: false,
       outlookdotcom_remove_subaddress: false,
       yahoo_remove_subaddress: false,
-      icloud_remove_subaddress: false
+      icloud_remove_subaddress: false,
     });
 
-    if (!normalizedEmail) {
+    if (normalizedEmail === false || normalizedEmail == null || normalizedEmail === '') {
       return ResultSpecification.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
-        errorParam: { reason: 'Email normalization failed' }
+        errorParam: { reason: 'Email normalization failed' },
       });
     }
 
@@ -148,20 +148,19 @@ export class UserEmail {
   /**
    * Creates UserEmail from trusted/validated source without additional validation
    * Use this when you're certain the email is already valid (e.g., from database)
-   * 
+   *
    * Use cases:
    * - Database reconstruction
    * - Internal system operations
    * - Data migration
    * - When email has already been validated
-   * 
+   *
    * WARNING: This bypasses all validation - use only with trusted data!
-   * 
+   *
    * @param email - Pre-validated email string
    * @returns UserEmail instance
    */
   public static fromValue(email: string): UserEmail {
     return new UserEmail({ value: email });
   }
-
 }

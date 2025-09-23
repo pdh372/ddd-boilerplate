@@ -9,19 +9,19 @@ import { IdVO } from '@shared/domain/vo';
 @Entity('users')
 export class UserEntity {
   @PrimaryGeneratedColumn()
-  id: string;
+  id!: string;
 
   @Column()
-  email: string;
+  email!: string;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column()
-  createdAt: Date;
+  createdAt!: Date;
 
   @Column()
-  updatedAt: Date;
+  updatedAt!: Date;
 }
 
 @Injectable()

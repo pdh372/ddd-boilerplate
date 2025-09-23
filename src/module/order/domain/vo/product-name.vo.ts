@@ -48,7 +48,7 @@ export class ProductName {
   }
 
   public equals(other: ProductName): boolean {
-    if (!other || !(other instanceof ProductName)) {
+    if (other == null || !(other instanceof ProductName)) {
       return false;
     }
     return this._props.value === other._props.value;

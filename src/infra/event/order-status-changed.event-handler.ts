@@ -1,4 +1,5 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { Logger } from '@nestjs/common';
 import { OrderStatusChangedEvent } from '@module/order/domain/event';
 
 /**
@@ -7,8 +8,10 @@ import { OrderStatusChangedEvent } from '@module/order/domain/event';
  */
 @EventsHandler(OrderStatusChangedEvent)
 export class OrderStatusChangedEventHandler implements IEventHandler<OrderStatusChangedEvent> {
+  private readonly logger = new Logger(OrderStatusChangedEventHandler.name);
+
   handle(event: OrderStatusChangedEvent): void {
-    console.log('📦 Order status changed:', {
+    this.logger.log('📦 Order status changed:', {
       orderId: event.order.id.value,
       customerId: event.order.customerId.value,
       previousStatus: event.previousStatus,

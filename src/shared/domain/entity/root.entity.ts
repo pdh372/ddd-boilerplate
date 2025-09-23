@@ -22,7 +22,7 @@ export abstract class EntityRoot<T> {
       return false;
     }
 
-    if (this._id && typeof this._id === 'object' && 'equals' in this._id) {
+    if (this._id != null && typeof this._id === 'object' && 'equals' in this._id) {
       return (this._id as unknown as Equatable).equals(object._id);
     }
 

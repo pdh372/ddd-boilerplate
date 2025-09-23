@@ -1,2 +1,2 @@
-export * from './use-case';
+export type * from './use-case';
 export * from './mapper';

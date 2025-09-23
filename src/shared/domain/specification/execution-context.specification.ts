@@ -22,7 +22,11 @@ export class ExecutionContextSpecification {
     userId?: string;
     requestId?: string;
   }): ExecutionContextSpecification {
-    return new ExecutionContextSpecification({ language, userId, requestId });
+    const state: ExecutionContextState = {};
+    if (language !== undefined) state.language = language;
+    if (userId !== undefined) state.userId = userId;
+    if (requestId !== undefined) state.requestId = requestId;
+    return new ExecutionContextSpecification(state);
   }
 
   get language() {

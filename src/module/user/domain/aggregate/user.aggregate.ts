@@ -44,7 +44,7 @@ export class UserAggregate extends AggregateRoot<IdVO> {
 
   public static create(props: { email: UserEmail; name: UserName }): ResultSpecification<UserAggregate> {
     // Input validation - ensure VOs are valid
-    if (!props.email || !props.name) {
+    if (props.email == null || props.name == null) {
       return ResultSpecification.fail({
         errorKey: 'USER_CREATION_MISSING_REQUIRED_FIELDS',
         errorParam: {},
@@ -73,7 +73,7 @@ export class UserAggregate extends AggregateRoot<IdVO> {
   }
 
   public updateName(name: UserName): ResultSpecification<void> {
-    if (!name) {
+    if (name == null) {
       return ResultSpecification.fail({
         errorKey: 'USER_UPDATE_NAME_INVALID',
         errorParam: {},
@@ -92,7 +92,7 @@ export class UserAggregate extends AggregateRoot<IdVO> {
   }
 
   public updateEmail(email: UserEmail): ResultSpecification<void> {
-    if (!email) {
+    if (email == null) {
       return ResultSpecification.fail({
         errorKey: 'USER_UPDATE_EMAIL_INVALID',
         errorParam: {},

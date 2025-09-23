@@ -9,19 +9,19 @@ import { IdVO } from '@shared/domain/vo';
 @Schema()
 export class OrderItemDocument {
   @Prop({ required: true })
-  id: string;
+  id!: string;
 
   @Prop({ required: true })
-  productId: string;
+  productId!: string;
 
   @Prop({ required: true })
-  productName: string;
+  productName!: string;
 
   @Prop({ required: true })
-  quantity: number;
+  quantity!: number;
 
   @Prop({ required: true })
-  unitPrice: number;
+  unitPrice!: number;
 }
 
 export const OrderItemSchema = SchemaFactory.createForClass(OrderItemDocument);
@@ -31,19 +31,19 @@ export class OrderDocument extends Document {
   declare _id: string;
 
   @Prop({ required: true })
-  customerId: string;
+  customerId!: string;
 
   @Prop({ required: true, enum: OrderStatus })
-  status: OrderStatus;
+  status!: OrderStatus;
 
   @Prop({ type: [OrderItemSchema], required: true })
-  items: OrderItemDocument[];
+  items!: OrderItemDocument[];
 
   @Prop({ default: Date.now })
-  createdAt: Date;
+  createdAt!: Date;
 
   @Prop({ default: Date.now })
-  updatedAt: Date;
+  updatedAt!: Date;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(OrderDocument);

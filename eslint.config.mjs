@@ -24,16 +24,26 @@ export default tseslint.config(
   },
   {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/only-throw-error': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'warn',
-      '@typescript-eslint/no-unsafe-return': 'warn',
-      '@typescript-eslint/no-unused-vars': 'warn',
-      'no-duplicate-imports': 'warn',
+      // ✅ STRICT TYPE SAFETY - Enterprise Standards
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unsafe-argument': 'error',
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/strict-boolean-expressions': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
+
+      // ✅ CODE QUALITY
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/only-throw-error': 'error',
+      '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/consistent-type-exports': 'error',
+      'no-duplicate-imports': 'error',
+      'no-console': 'warn',
+      'prefer-const': 'error',
     },
   },
 );

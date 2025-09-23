@@ -2,6 +2,6 @@ export * from './aggregate';
 
 export * from './event';
 
-export * from './repo';
+export type * from './repo';
 
 export * from './vo';

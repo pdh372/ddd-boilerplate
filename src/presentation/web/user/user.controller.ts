@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, HttpException } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, HttpException, HttpStatus } from '@nestjs/common';
 import { CreateUserUseCase, GetUserUseCase } from '@module/user/app/use-case';
 import { AcceptLanguage, IAcceptLanguageContext } from '@shared/decorator';
 import { CreateUserDto, UserResponseDto } from './dto';
@@ -20,10 +20,8 @@ export class UserController {
     const result = await this._createUserUseCase.execute(body);
 
     if (result.isFailure) {
-      throw new HttpException(
-        acceptLanguage({ key: result.errorKey, param: result.errorParam }),
-        ERROR_STATUS_CODE[result.errorKey],
-      );
+      const statusCode = ERROR_STATUS_CODE[result.errorKey] ?? HttpStatus.INTERNAL_SERVER_ERROR;
+      throw new HttpException(acceptLanguage({ key: result.errorKey, param: result.errorParam }), statusCode);
     }
 
     const user = result.getValue;
@@ -38,10 +36,8 @@ export class UserController {
     const result = await this._getUserUseCase.execute({ userId: id });
 
     if (result.isFailure) {
-      throw new HttpException(
-        acceptLanguage({ key: result.errorKey, param: result.errorParam }),
-        ERROR_STATUS_CODE[result.errorKey],
-      );
+      const statusCode = ERROR_STATUS_CODE[result.errorKey] ?? HttpStatus.INTERNAL_SERVER_ERROR;
+      throw new HttpException(acceptLanguage({ key: result.errorKey, param: result.errorParam }), statusCode);
     }
 
     const user = result.getValue;

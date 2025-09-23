@@ -1,4 +1,5 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { Logger } from '@nestjs/common';
 import { UserCreatedEvent } from '@module/user/domain/event';
 
 /**
@@ -7,8 +8,10 @@ import { UserCreatedEvent } from '@module/user/domain/event';
  */
 @EventsHandler(UserCreatedEvent)
 export class UserCreatedEventHandler implements IEventHandler<UserCreatedEvent> {
+  private readonly logger = new Logger(UserCreatedEventHandler.name);
+
   handle(event: UserCreatedEvent): void {
-    console.log('📧 New user created, sending welcome email:', {
+    this.logger.log('📧 New user created, sending welcome email:', {
       userId: event.user.id.value,
       email: event.user.email.value,
       name: event.user.name.value,

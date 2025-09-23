@@ -1,14 +1,17 @@
 import { NestFactory } from '@nestjs/core';
-
 import { AppModule } from './presentation/presentation.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import { ConfigService } from '@shared/config';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
-    logger: ['debug', 'error', 'fatal', 'verbose', 'warn'], //
+    logger: ['debug', 'error', 'fatal', 'verbose', 'warn'],
   });
 
-  const port = process.env.PORT || 3001;
+  const configService = app.get(ConfigService);
+  const logger = new Logger('Bootstrap');
+
+  const port = configService.port;
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -22,10 +25,14 @@ async function bootstrap() {
   );
 
   await app.listen(port, () => {
-    console.info(`Application is running on: http://localhost:${port}`);
+    logger.log(`Application is running on: http://localhost:${port}`);
+    logger.log(`Environment: ${configService.nodeEnv}`);
   });
 }
 
-bootstrap().catch((error) => {
-  console.error('Error during application bootstrap:', error);
+bootstrap().catch((error: Error) => {
+  const logger = new Logger('Bootstrap');
+  logger.error('Error during application bootstrap:', error.message);
+  logger.error(error.stack);
+  process.exit(1);
 });

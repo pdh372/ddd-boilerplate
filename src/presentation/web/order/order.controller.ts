@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Body, Param, HttpException } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, Param, HttpException, HttpStatus } from '@nestjs/common';
 import {
   CreateOrderUseCase,
   GetOrderUseCase,
@@ -27,10 +27,8 @@ export class OrderController {
     const result = await this._createOrderUseCase.execute(body);
 
     if (result.isFailure) {
-      throw new HttpException(
-        acceptLanguage({ key: result.errorKey, param: result.errorParam }),
-        ERROR_STATUS_CODE[result.errorKey],
-      );
+      const statusCode = ERROR_STATUS_CODE[result.errorKey] ?? HttpStatus.INTERNAL_SERVER_ERROR;
+      throw new HttpException(acceptLanguage({ key: result.errorKey, param: result.errorParam }), statusCode);
     }
 
     return OrderMapper.toResponseDto(result.getValue);
@@ -44,10 +42,8 @@ export class OrderController {
     const result = await this._getOrderUseCase.execute({ orderId: id });
 
     if (result.isFailure) {
-      throw new HttpException(
-        acceptLanguage({ key: result.errorKey, param: result.errorParam }),
-        ERROR_STATUS_CODE[result.errorKey],
-      );
+      const statusCode = ERROR_STATUS_CODE[result.errorKey] ?? HttpStatus.INTERNAL_SERVER_ERROR;
+      throw new HttpException(acceptLanguage({ key: result.errorKey, param: result.errorParam }), statusCode);
     }
 
     return OrderMapper.toResponseDto(result.getValue);
@@ -67,10 +63,8 @@ export class OrderController {
     });
 
     if (result.isFailure) {
-      throw new HttpException(
-        acceptLanguage({ key: result.errorKey, param: result.errorParam }),
-        ERROR_STATUS_CODE[result.errorKey],
-      );
+      const statusCode = ERROR_STATUS_CODE[result.errorKey] ?? HttpStatus.INTERNAL_SERVER_ERROR;
+      throw new HttpException(acceptLanguage({ key: result.errorKey, param: result.errorParam }), statusCode);
     }
 
     return OrderMapper.toResponseDto(result.getValue);
@@ -91,10 +85,8 @@ export class OrderController {
     });
 
     if (result.isFailure) {
-      throw new HttpException(
-        acceptLanguage({ key: result.errorKey, param: result.errorParam }),
-        ERROR_STATUS_CODE[result.errorKey],
-      );
+      const statusCode = ERROR_STATUS_CODE[result.errorKey] ?? HttpStatus.INTERNAL_SERVER_ERROR;
+      throw new HttpException(acceptLanguage({ key: result.errorKey, param: result.errorParam }), statusCode);
     }
 
     return OrderMapper.toResponseDto(result.getValue);

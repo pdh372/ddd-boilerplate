@@ -1,1 +1,1 @@
-export * from './order.repo';
+export type * from './order.repo';
