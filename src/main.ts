@@ -4,9 +4,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@shared/config';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, {
-    logger: ['debug', 'error', 'fatal', 'verbose', 'warn'],
-  });
+  const app = await NestFactory.create(AppModule, {});
 
   const configService = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
