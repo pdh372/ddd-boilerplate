@@ -7,6 +7,7 @@ import { ResultSpecification } from '@shared/domain/specification';
 import type { ICache } from '@shared/domain/cache';
 import { USER_REPOSITORY } from '@module/user/user.token';
 import { CACHE_SERVICE } from '@infra/cache';
+import { TRANSLATOR_KEY } from '@shared/translator';
 
 interface IGetUserWithCacheDto {
   userId: string;
@@ -25,7 +26,7 @@ interface IGetUserWithCacheDto {
  * Cache invalidation happens on user updates
  */
 @Injectable()
-export class GetUserWithCacheUseCase implements UseCase<IGetUserWithCacheDto, UserAggregate | null> {
+export class GetUserWithCacheUseCase implements UseCase<IGetUserWithCacheDto, UserAggregate> {
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly userRepository: IUserRepository,
@@ -33,7 +34,7 @@ export class GetUserWithCacheUseCase implements UseCase<IGetUserWithCacheDto, Us
     private readonly cacheService: ICache,
   ) {}
 
-  async execute(input: IGetUserWithCacheDto): Promise<ResultSpecification<UserAggregate | null>> {
+  async execute(input: IGetUserWithCacheDto): Promise<ResultSpecification<UserAggregate>> {
     // 1. Validate input
     const userIdResult = IdVO.validate(input.userId);
     if (userIdResult.isFailure) {
@@ -55,9 +56,8 @@ export class GetUserWithCacheUseCase implements UseCase<IGetUserWithCacheDto, Us
 
     // 3. Cache miss - get from database
     const user = await this.userRepository.findById(userId);
-
-    if (user === null) {
-      return ResultSpecification.ok(null);
+    if (!user) {
+      return ResultSpecification.fail({ errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND });
     }
 
     // 4. Store in cache for next request (30 minutes TTL)

@@ -22,6 +22,6 @@ export const CACHE_SERVICE = Symbol('CACHE_SERVICE');
       useClass: RedisCacheService,
     },
   ],
-  exports: [RedisCacheService],
+  exports: [CACHE_SERVICE],
 })
 export class CacheModule {}

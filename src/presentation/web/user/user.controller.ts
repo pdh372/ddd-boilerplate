@@ -1,5 +1,5 @@
 import { Controller, Post, Get, Body, Param, HttpException, HttpStatus } from '@nestjs/common';
-import { CreateUserUseCase, GetUserUseCase } from '@module/user/app/use-case';
+import { GetUserWithCacheUseCase, CreateUserUseCase } from '@module/user/app/use-case';
 import { AcceptLanguage, IAcceptLanguageContext } from '@shared/decorator';
 import { CreateUserDto, UserResponseDto } from './dto';
 import { ERROR_STATUS_CODE } from '@shared/translator';
@@ -9,7 +9,7 @@ import { UserMapper } from './mapper/user.mapper';
 export class UserController {
   constructor(
     private readonly _createUserUseCase: CreateUserUseCase,
-    private readonly _getUserUseCase: GetUserUseCase,
+    private readonly _getUserUseCase: GetUserWithCacheUseCase,
   ) {}
 
   @Post()
