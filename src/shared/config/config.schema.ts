@@ -43,6 +43,39 @@ export const ConfigSchema = z.object({
 
   // Logging Configuration (optional)
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug', 'verbose']).optional().default('info'),
+
+  // Redis Configuration
+  REDIS_HOST: z.string().min(1, 'Redis host is required').optional().default('localhost'),
+  REDIS_PORT: z
+    .string()
+    .optional()
+    .default('6379')
+    .transform((val) => parseInt(val, 10))
+    .refine((port) => port > 0 && port < 65536, {
+      message: 'Redis port must be between 1 and 65535',
+    }),
+  REDIS_PASSWORD: z.string().optional(),
+  REDIS_DB: z
+    .string()
+    .optional()
+    .default('0')
+    .transform((val) => parseInt(val, 10))
+    .refine((db) => db >= 0 && db < 16, {
+      message: 'Redis DB must be between 0 and 15',
+    }),
+  REDIS_TTL: z
+    .string()
+    .optional()
+    .default('3600')
+    .transform((val) => parseInt(val, 10))
+    .refine((ttl) => ttl > 0, {
+      message: 'Redis TTL must be positive',
+    }),
+  REDIS_ENABLED: z
+    .string()
+    .optional()
+    .default('true')
+    .transform((val) => val.toLowerCase() === 'true'),
 });
 
 export type ConfigType = z.infer<typeof ConfigSchema>;
@@ -62,4 +95,10 @@ export const ENV_KEYS = {
   JWT_SECRET: 'JWT_SECRET',
   JWT_EXPIRES_IN: 'JWT_EXPIRES_IN',
   LOG_LEVEL: 'LOG_LEVEL',
+  REDIS_HOST: 'REDIS_HOST',
+  REDIS_PORT: 'REDIS_PORT',
+  REDIS_PASSWORD: 'REDIS_PASSWORD',
+  REDIS_DB: 'REDIS_DB',
+  REDIS_TTL: 'REDIS_TTL',
+  REDIS_ENABLED: 'REDIS_ENABLED',
 } as const;

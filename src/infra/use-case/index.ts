@@ -2,13 +2,15 @@ import { USER_REPOSITORY } from '@module/user/user.token';
 import { ORDER_REPOSITORY } from '@module/order/order.token';
 import type { IUserRepository } from '@module/user/domain';
 import type { IOrderRepository } from '@module/order/domain';
-import { GetUserUseCase, CreateUserUseCase } from '@module/user/app/use-case';
+import { GetUserWithCacheUseCase, CreateUserUseCase } from '@module/user/app/use-case';
 import {
   CreateOrderUseCase,
   GetOrderUseCase,
   UpdateOrderItemQuantityUseCase,
   AddOrderItemUseCase,
 } from '@module/order/app/use-case';
+import { CACHE_SERVICE } from '../cache';
+import type { ICache } from '@shared/domain/cache';
 
 export const USE_CASE = {
   USER: {
@@ -20,10 +22,10 @@ export const USE_CASE = {
       },
     },
     GET_USER: {
-      provide: GetUserUseCase,
-      inject: [USER_REPOSITORY],
-      useFactory: (userRepo: IUserRepository) => {
-        return new GetUserUseCase(userRepo);
+      provide: GetUserWithCacheUseCase,
+      inject: [USER_REPOSITORY, CACHE_SERVICE],
+      useFactory: (userRepo: IUserRepository, cacheService: ICache) => {
+        return new GetUserWithCacheUseCase(userRepo, cacheService);
       },
     },
   },
