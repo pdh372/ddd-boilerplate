@@ -12,10 +12,32 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
+    // ✅ STRICT MODE - Enterprise Standards
+    "strict": true,
+    "noImplicitAny": true,
     "strictNullChecks": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    "paths": {
+      "@shared/*": [
+        "src/shared/*"
+      ],
+      "@module/*": [
+        "src/module/*"
+      ],
+      "@presentation/*": [
+        "src/presentation/*"
+      ],
+      "@infra/*": [
+        "src/infra/*"
+      ]
+    }
   }
 }
