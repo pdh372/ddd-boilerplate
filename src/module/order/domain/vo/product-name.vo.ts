@@ -1,4 +1,4 @@
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
 interface ProductNameProps {
@@ -29,14 +29,14 @@ export class ProductName {
    * Validates and creates ProductName from external input
    * Use for: Product creation, updates, API requests
    */
-  public static validate(name: string): ResultSpecification<ProductName> {
+  public static validate(name: string): Result<ProductName> {
     if (!this.isValidName(name)) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_PRODUCT_NAME,
       });
     }
 
-    return ResultSpecification.ok(new ProductName({ value: name.trim() }));
+    return Result.ok(new ProductName({ value: name.trim() }));
   }
 
   /**

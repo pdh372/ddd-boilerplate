@@ -1,4 +1,4 @@
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
 interface IUserNameProps {
@@ -40,9 +40,9 @@ export class UserName {
   /**
    * Validates and creates UserName from external/untrusted input
    */
-  public static validate(name: string): ResultSpecification<UserName> {
+  public static validate(name: string): Result<UserName> {
     if (!name || typeof name !== 'string') {
-      return ResultSpecification.fail<UserName>({
+      return Result.fail<UserName>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_NAME,
         errorParam: { min_length: this.MIN_LENGTH, max_length: this.MAX_LENGTH },
       });
@@ -51,13 +51,13 @@ export class UserName {
     const trimmedName = name.trim();
 
     if (trimmedName.length < this.MIN_LENGTH || trimmedName.length > this.MAX_LENGTH) {
-      return ResultSpecification.fail<UserName>({
+      return Result.fail<UserName>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_NAME,
         errorParam: { min_length: this.MIN_LENGTH, max_length: this.MAX_LENGTH },
       });
     }
 
-    return ResultSpecification.ok<UserName>(new UserName({ value: trimmedName }));
+    return Result.ok<UserName>(new UserName({ value: trimmedName }));
   }
 
   /**

@@ -1,4 +1,4 @@
-import { ResultSpecification } from './result.specification';
+import { Result } from './result.specification';
 
 /**
  * Abstract Specification Pattern
@@ -34,11 +34,11 @@ export abstract class Specification<T> {
   /**
    * Validate entity against specification and return Result
    */
-  validate(entity: T): ResultSpecification<T> {
+  validate(entity: T): Result<T> {
     if (this.isSatisfiedBy(entity)) {
-      return ResultSpecification.ok(entity);
+      return Result.ok(entity);
     }
-    return ResultSpecification.fail({
+    return Result.fail({
       errorKey: 'SPECIFICATION_NOT_SATISFIED',
       errorParam: { specification: this.constructor.name },
     });

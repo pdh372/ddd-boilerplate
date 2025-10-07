@@ -3,7 +3,7 @@ export interface IErrorSpecification {
   errorParam?: Record<string, string | number | boolean>;
 }
 
-export class ResultSpecification<T> {
+export class Result<T> {
   public readonly isSuccess: boolean;
   public readonly isFailure: boolean;
   private readonly _value: T | undefined;
@@ -57,18 +57,18 @@ export class ResultSpecification<T> {
     return this._error as IErrorSpecification;
   }
 
-  public static ok<U>(value?: U): ResultSpecification<U> {
-    return new ResultSpecification<U>(true, undefined, value);
+  public static ok<U>(value?: U): Result<U> {
+    return new Result<U>(true, undefined, value);
   }
 
-  public static fail<U>(input: IErrorSpecification): ResultSpecification<U> {
-    return new ResultSpecification<U>(false, input);
+  public static fail<U>(input: IErrorSpecification): Result<U> {
+    return new Result<U>(false, input);
   }
 
-  public static combine(results: ResultSpecification<unknown>[]): ResultSpecification<null> {
+  public static combine(results: Result<unknown>[]): Result<null> {
     for (const result of results) {
-      if (result.isFailure) return result as ResultSpecification<null>;
+      if (result.isFailure) return result as Result<null>;
     }
-    return ResultSpecification.ok<null>();
+    return Result.ok<null>();
   }
 }

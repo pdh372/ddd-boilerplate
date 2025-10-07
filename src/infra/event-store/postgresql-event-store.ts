@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, QueryRunner, DataSource } from 'typeorm';
 import type { IEventStore, StoredDomainEvent } from '@shared/domain/event-store';
 import type { EventRoot } from '@shared/domain/event';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { v4 as uuidv4 } from 'uuid';
 import { EventStoreEntity } from './entity/event-store.entity';
 import { SnapshotEntity } from './entity/snapshot.entity';
@@ -36,7 +36,7 @@ export class PostgreSqlEventStore implements IEventStore {
     aggregateType: string,
     events: EventRoot[],
     expectedVersion?: number,
-  ): Promise<ResultSpecification<void>> {
+  ): Promise<Result<void>> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -47,7 +47,7 @@ export class PostgreSqlEventStore implements IEventStore {
 
       if (expectedVersion !== undefined && currentVersion !== expectedVersion) {
         await queryRunner.rollbackTransaction();
-        return ResultSpecification.fail({
+        return Result.fail({
           errorKey: 'EVENT_STORE_CONCURRENCY_ERROR',
           errorParam: {
             aggregateId,
@@ -97,12 +97,12 @@ export class PostgreSqlEventStore implements IEventStore {
         aggregateId,
       });
 
-      return ResultSpecification.ok();
+      return Result.ok();
     } catch (error) {
       await queryRunner.rollbackTransaction();
       this.logger.error(`Failed to append events for aggregate ${aggregateId}:`, error);
 
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'EVENT_STORE_APPEND_ERROR',
         errorParam: {
           aggregateId,
@@ -117,7 +117,7 @@ export class PostgreSqlEventStore implements IEventStore {
   async getEventsForAggregate(
     aggregateId: string,
     fromVersion?: number,
-  ): Promise<ResultSpecification<StoredDomainEvent[]>> {
+  ): Promise<Result<StoredDomainEvent[]>> {
     try {
       const queryBuilder = this.eventRepository
         .createQueryBuilder('event')
@@ -136,10 +136,10 @@ export class PostgreSqlEventStore implements IEventStore {
           (fromVersion !== undefined ? ` from version ${fromVersion}` : ''),
       );
 
-      return ResultSpecification.ok(storedEvents);
+      return Result.ok(storedEvents);
     } catch (error) {
       this.logger.error(`Failed to get events for aggregate ${aggregateId}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'EVENT_STORE_GET_ERROR',
         errorParam: {
           aggregateId,
@@ -149,7 +149,7 @@ export class PostgreSqlEventStore implements IEventStore {
     }
   }
 
-  async getEventsByType(eventType: string, fromVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>> {
+  async getEventsByType(eventType: string, fromVersion?: number): Promise<Result<StoredDomainEvent[]>> {
     try {
       const queryBuilder = this.eventRepository
         .createQueryBuilder('event')
@@ -164,10 +164,10 @@ export class PostgreSqlEventStore implements IEventStore {
       const storedEvents = events.map((entity) => this.mapEntityToStoredEvent(entity));
 
       this.logger.debug(`Retrieved ${events.length} events of type ${eventType}`);
-      return ResultSpecification.ok(storedEvents);
+      return Result.ok(storedEvents);
     } catch (error) {
       this.logger.error(`Failed to get events by type ${eventType}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'EVENT_STORE_GET_ERROR',
         errorParam: {
           eventType,
@@ -177,7 +177,7 @@ export class PostgreSqlEventStore implements IEventStore {
     }
   }
 
-  async getAllEvents(fromVersion?: number, toVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>> {
+  async getAllEvents(fromVersion?: number, toVersion?: number): Promise<Result<StoredDomainEvent[]>> {
     try {
       const queryBuilder = this.eventRepository.createQueryBuilder('event');
 
@@ -200,10 +200,10 @@ export class PostgreSqlEventStore implements IEventStore {
             : ''),
       );
 
-      return ResultSpecification.ok(storedEvents);
+      return Result.ok(storedEvents);
     } catch (error) {
       this.logger.error('Failed to get all events:', error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'EVENT_STORE_GET_ERROR',
         errorParam: { error: this.extractErrorMessage(error) },
       });
@@ -212,7 +212,7 @@ export class PostgreSqlEventStore implements IEventStore {
 
   async getEventsForAggregates(
     aggregateIds: string[],
-  ): Promise<ResultSpecification<Record<string, StoredDomainEvent[]>>> {
+  ): Promise<Result<Record<string, StoredDomainEvent[]>>> {
     try {
       const events = await this.eventRepository
         .createQueryBuilder('event')
@@ -232,10 +232,10 @@ export class PostgreSqlEventStore implements IEventStore {
 
       this.logger.debug(`Retrieved events for ${aggregateIds.length} aggregates ` + `(total ${events.length} events)`);
 
-      return ResultSpecification.ok(result);
+      return Result.ok(result);
     } catch (error) {
       this.logger.error('Failed to get events for multiple aggregates:', error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'EVENT_STORE_GET_ERROR',
         errorParam: {
           aggregateCount: aggregateIds.length,
@@ -250,7 +250,7 @@ export class PostgreSqlEventStore implements IEventStore {
     aggregateType: string,
     snapshot: Record<string, unknown>,
     version: number,
-  ): Promise<ResultSpecification<void>> {
+  ): Promise<Result<void>> {
     try {
       const snapshotEntity = new SnapshotEntity();
       snapshotEntity.aggregateId = aggregateId;
@@ -266,10 +266,10 @@ export class PostgreSqlEventStore implements IEventStore {
 
       this.logger.debug(`Saved snapshot for aggregate ${aggregateId} at version ${version}`);
 
-      return ResultSpecification.ok();
+      return Result.ok();
     } catch (error) {
       this.logger.error(`Failed to save snapshot for aggregate ${aggregateId}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'EVENT_STORE_SNAPSHOT_ERROR',
         errorParam: {
           aggregateId,
@@ -282,7 +282,7 @@ export class PostgreSqlEventStore implements IEventStore {
 
   async getSnapshot(
     aggregateId: string,
-  ): Promise<ResultSpecification<{ snapshot: Record<string, unknown>; version: number } | null>> {
+  ): Promise<Result<{ snapshot: Record<string, unknown>; version: number } | null>> {
     try {
       const snapshotEntity = await this.snapshotRepository.findOne({
         where: { aggregateId },
@@ -290,7 +290,7 @@ export class PostgreSqlEventStore implements IEventStore {
       });
 
       if (!snapshotEntity) {
-        return ResultSpecification.ok(null);
+        return Result.ok(null);
       }
 
       const result = {
@@ -300,10 +300,10 @@ export class PostgreSqlEventStore implements IEventStore {
 
       this.logger.debug(`Retrieved snapshot for aggregate ${aggregateId} at version ${snapshotEntity.version}`);
 
-      return ResultSpecification.ok(result);
+      return Result.ok(result);
     } catch (error) {
       this.logger.error(`Failed to get snapshot for aggregate ${aggregateId}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'EVENT_STORE_SNAPSHOT_ERROR',
         errorParam: {
           aggregateId,
@@ -404,7 +404,7 @@ export class PostgreSqlEventStore implements IEventStore {
   /**
    * Production utility: Create database tables
    */
-  async createTables(): Promise<ResultSpecification<void>> {
+  async createTables(): Promise<Result<void>> {
     try {
       await this.dataSource.query(`
         CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -442,10 +442,10 @@ export class PostgreSqlEventStore implements IEventStore {
       `);
 
       this.logger.log('Event store database tables created successfully');
-      return ResultSpecification.ok();
+      return Result.ok();
     } catch (error) {
       this.logger.error('Failed to create event store tables:', error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'EVENT_STORE_SETUP_ERROR',
         errorParam: { error: this.extractErrorMessage(error) },
       });

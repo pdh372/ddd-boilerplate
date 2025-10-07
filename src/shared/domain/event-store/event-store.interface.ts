@@ -1,5 +1,5 @@
 import type { EventRoot } from '@shared/domain/event';
-import type { ResultSpecification } from '@shared/domain/specification';
+import type { Result } from '@shared/domain/specification';
 
 /**
  * Event Store dependency injection token
@@ -36,34 +36,34 @@ export interface IEventStore {
     aggregateType: string,
     events: EventRoot[],
     expectedVersion?: number,
-  ): Promise<ResultSpecification<void>>;
+  ): Promise<Result<void>>;
 
   /**
    * Get all events for a specific aggregate
    * @param aggregateId The aggregate identifier
    * @param fromVersion Start from this version (optional)
    */
-  getEventsForAggregate(aggregateId: string, fromVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>>;
+  getEventsForAggregate(aggregateId: string, fromVersion?: number): Promise<Result<StoredDomainEvent[]>>;
 
   /**
    * Get all events of a specific type
    * @param eventType The event type to filter by
    * @param fromVersion Start from this version (optional)
    */
-  getEventsByType(eventType: string, fromVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>>;
+  getEventsByType(eventType: string, fromVersion?: number): Promise<Result<StoredDomainEvent[]>>;
 
   /**
    * Get all events in the store
    * @param fromVersion Start from this version (optional)
    * @param toVersion End at this version (optional)
    */
-  getAllEvents(fromVersion?: number, toVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>>;
+  getAllEvents(fromVersion?: number, toVersion?: number): Promise<Result<StoredDomainEvent[]>>;
 
   /**
    * Get events for multiple aggregates (batch operation)
    * @param aggregateIds Array of aggregate identifiers
    */
-  getEventsForAggregates(aggregateIds: string[]): Promise<ResultSpecification<Record<string, StoredDomainEvent[]>>>;
+  getEventsForAggregates(aggregateIds: string[]): Promise<Result<Record<string, StoredDomainEvent[]>>>;
 
   /**
    * Save a snapshot of an aggregate
@@ -77,7 +77,7 @@ export interface IEventStore {
     aggregateType: string,
     snapshot: Record<string, unknown>,
     version: number,
-  ): Promise<ResultSpecification<void>>;
+  ): Promise<Result<void>>;
 
   /**
    * Get the latest snapshot for an aggregate
@@ -85,5 +85,5 @@ export interface IEventStore {
    */
   getSnapshot(
     aggregateId: string,
-  ): Promise<ResultSpecification<{ snapshot: Record<string, unknown>; version: number } | null>>;
+  ): Promise<Result<{ snapshot: Record<string, unknown>; version: number } | null>>;
 }

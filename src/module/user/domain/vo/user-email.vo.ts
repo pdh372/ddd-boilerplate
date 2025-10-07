@@ -1,4 +1,4 @@
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 import { isEmail, normalizeEmail } from 'validator';
 
@@ -79,12 +79,12 @@ export class UserEmail {
    * - Any external data source
    *
    * @param email - Raw email string from external source
-   * @returns ResultSpecification containing UserEmail or validation error
+   * @returns Result containing UserEmail or validation error
    */
-  public static validate(email: string): ResultSpecification<UserEmail> {
+  public static validate(email: string): Result<UserEmail> {
     // Null/undefined/empty check
     if (!email || typeof email !== 'string') {
-      return ResultSpecification.fail<UserEmail>({
+      return Result.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
         errorParam: { reason: 'Email is required' },
       });
@@ -95,7 +95,7 @@ export class UserEmail {
 
     // Empty after trim check
     if (trimmedEmail.length === 0) {
-      return ResultSpecification.fail<UserEmail>({
+      return Result.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
         errorParam: { reason: 'Email cannot be empty' },
       });
@@ -103,14 +103,14 @@ export class UserEmail {
 
     // Length constraints (before validation for performance)
     if (trimmedEmail.length < this.MIN_LENGTH) {
-      return ResultSpecification.fail<UserEmail>({
+      return Result.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
         errorParam: { reason: `Email too short (minimum ${this.MIN_LENGTH} characters)` },
       });
     }
 
     if (trimmedEmail.length > this.MAX_LENGTH) {
-      return ResultSpecification.fail<UserEmail>({
+      return Result.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
         errorParam: { reason: `Email too long (maximum ${this.MAX_LENGTH} characters)` },
       });
@@ -118,7 +118,7 @@ export class UserEmail {
 
     // Format validation using validator.js (RFC compliant)
     if (!isEmail(trimmedEmail)) {
-      return ResultSpecification.fail<UserEmail>({
+      return Result.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
         errorParam: { reason: 'Invalid email format' },
       });
@@ -136,13 +136,13 @@ export class UserEmail {
     });
 
     if (normalizedEmail === false || normalizedEmail == null || normalizedEmail === '') {
-      return ResultSpecification.fail<UserEmail>({
+      return Result.fail<UserEmail>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__INVALID_EMAIL,
         errorParam: { reason: 'Email normalization failed' },
       });
     }
 
-    return ResultSpecification.ok<UserEmail>(new UserEmail({ value: normalizedEmail }));
+    return Result.ok<UserEmail>(new UserEmail({ value: normalizedEmail }));
   }
 
   /**

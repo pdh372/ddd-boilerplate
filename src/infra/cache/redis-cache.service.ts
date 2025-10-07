@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import type { ICache } from '@shared/domain/cache';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { RedisConfig } from './redis.config';
 
 /**
@@ -60,9 +60,9 @@ export class RedisCacheService implements ICache, OnModuleInit, OnModuleDestroy 
     }
   }
 
-  async get<T>(key: string): Promise<ResultSpecification<T | null>> {
+  async get<T>(key: string): Promise<Result<T | null>> {
     if (!this.isEnabled) {
-      return ResultSpecification.ok(null);
+      return Result.ok(null);
     }
 
     try {
@@ -70,24 +70,24 @@ export class RedisCacheService implements ICache, OnModuleInit, OnModuleDestroy 
 
       if (value == null) {
         this.logger.debug(`Cache miss: ${key}`);
-        return ResultSpecification.ok(null);
+        return Result.ok(null);
       }
 
       const deserialized = this.deserialize<T>(value);
       this.logger.debug(`Cache hit: ${key}`);
-      return ResultSpecification.ok(deserialized);
+      return Result.ok(deserialized);
     } catch (error) {
       this.logger.error(`Failed to get cache key ${key}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'CACHE_GET_ERROR',
         errorParam: { key, error: this.extractErrorMessage(error) },
       });
     }
   }
 
-  async set<T>(key: string, value: T, ttl?: number): Promise<ResultSpecification<void>> {
+  async set<T>(key: string, value: T, ttl?: number): Promise<Result<void>> {
     if (!this.isEnabled) {
-      return ResultSpecification.ok();
+      return Result.ok();
     }
 
     try {
@@ -101,37 +101,37 @@ export class RedisCacheService implements ICache, OnModuleInit, OnModuleDestroy 
       }
 
       this.logger.debug(`Cache set: ${key} (TTL: ${expiry}s)`);
-      return ResultSpecification.ok();
+      return Result.ok();
     } catch (error) {
       this.logger.error(`Failed to set cache key ${key}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'CACHE_SET_ERROR',
         errorParam: { key, error: this.extractErrorMessage(error) },
       });
     }
   }
 
-  async delete(key: string): Promise<ResultSpecification<void>> {
+  async delete(key: string): Promise<Result<void>> {
     if (!this.isEnabled) {
-      return ResultSpecification.ok();
+      return Result.ok();
     }
 
     try {
       await this.redis.del(key);
       this.logger.debug(`Cache deleted: ${key}`);
-      return ResultSpecification.ok();
+      return Result.ok();
     } catch (error) {
       this.logger.error(`Failed to delete cache key ${key}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'CACHE_DELETE_ERROR',
         errorParam: { key, error: this.extractErrorMessage(error) },
       });
     }
   }
 
-  async deleteMany(keys: string[]): Promise<ResultSpecification<void>> {
+  async deleteMany(keys: string[]): Promise<Result<void>> {
     if (!this.isEnabled || keys.length === 0) {
-      return ResultSpecification.ok();
+      return Result.ok();
     }
 
     try {
@@ -139,54 +139,54 @@ export class RedisCacheService implements ICache, OnModuleInit, OnModuleDestroy 
         await this.redis.del(...keys);
       }
       this.logger.debug(`Cache deleted ${keys.length} keys`);
-      return ResultSpecification.ok();
+      return Result.ok();
     } catch (error) {
       this.logger.error(`Failed to delete multiple cache keys:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'CACHE_DELETE_MANY_ERROR',
         errorParam: { count: keys.length, error: this.extractErrorMessage(error) },
       });
     }
   }
 
-  async exists(key: string): Promise<ResultSpecification<boolean>> {
+  async exists(key: string): Promise<Result<boolean>> {
     if (!this.isEnabled) {
-      return ResultSpecification.ok(false);
+      return Result.ok(false);
     }
 
     try {
       const exists = (await this.redis.exists(key)) === 1;
-      return ResultSpecification.ok(exists);
+      return Result.ok(exists);
     } catch (error) {
       this.logger.error(`Failed to check cache key existence ${key}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'CACHE_EXISTS_ERROR',
         errorParam: { key, error: this.extractErrorMessage(error) },
       });
     }
   }
 
-  async clear(): Promise<ResultSpecification<void>> {
+  async clear(): Promise<Result<void>> {
     if (!this.isEnabled) {
-      return ResultSpecification.ok();
+      return Result.ok();
     }
 
     try {
       await this.redis.flushdb();
       this.logger.warn('Cache cleared (FLUSHDB)');
-      return ResultSpecification.ok();
+      return Result.ok();
     } catch (error) {
       this.logger.error('Failed to clear cache:', error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'CACHE_CLEAR_ERROR',
         errorParam: { error: this.extractErrorMessage(error) },
       });
     }
   }
 
-  async getMany<T>(keys: string[]): Promise<ResultSpecification<Record<string, T | null>>> {
+  async getMany<T>(keys: string[]): Promise<Result<Record<string, T | null>>> {
     if (!this.isEnabled || keys.length === 0) {
-      return ResultSpecification.ok({});
+      return Result.ok({});
     }
 
     try {
@@ -199,19 +199,19 @@ export class RedisCacheService implements ICache, OnModuleInit, OnModuleDestroy 
       });
 
       this.logger.debug(`Cache getMany: ${keys.length} keys`);
-      return ResultSpecification.ok(result);
+      return Result.ok(result);
     } catch (error) {
       this.logger.error('Failed to get multiple cache keys:', error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'CACHE_GET_MANY_ERROR',
         errorParam: { count: keys.length, error: this.extractErrorMessage(error) },
       });
     }
   }
 
-  async setMany<T>(entries: Record<string, T>, ttl?: number): Promise<ResultSpecification<void>> {
+  async setMany<T>(entries: Record<string, T>, ttl?: number): Promise<Result<void>> {
     if (!this.isEnabled || Object.keys(entries).length === 0) {
-      return ResultSpecification.ok();
+      return Result.ok();
     }
 
     try {
@@ -229,32 +229,32 @@ export class RedisCacheService implements ICache, OnModuleInit, OnModuleDestroy 
 
       await pipeline.exec();
       this.logger.debug(`Cache setMany: ${Object.keys(entries).length} keys (TTL: ${expiry}s)`);
-      return ResultSpecification.ok();
+      return Result.ok();
     } catch (error) {
       this.logger.error('Failed to set multiple cache keys:', error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'CACHE_SET_MANY_ERROR',
         errorParam: { count: Object.keys(entries).length, error: this.extractErrorMessage(error) },
       });
     }
   }
 
-  async setWithExpiry<T>(key: string, value: T, ttl: number): Promise<ResultSpecification<void>> {
+  async setWithExpiry<T>(key: string, value: T, ttl: number): Promise<Result<void>> {
     return this.set(key, value, ttl);
   }
 
-  async keys(pattern: string): Promise<ResultSpecification<string[]>> {
+  async keys(pattern: string): Promise<Result<string[]>> {
     if (!this.isEnabled) {
-      return ResultSpecification.ok([]);
+      return Result.ok([]);
     }
 
     try {
       const keys = await this.redis.keys(pattern);
       this.logger.debug(`Cache keys matching pattern ${pattern}: ${keys.length} found`);
-      return ResultSpecification.ok(keys);
+      return Result.ok(keys);
     } catch (error) {
       this.logger.error(`Failed to get cache keys with pattern ${pattern}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'CACHE_KEYS_ERROR',
         errorParam: { pattern, error: this.extractErrorMessage(error) },
       });
@@ -264,17 +264,17 @@ export class RedisCacheService implements ICache, OnModuleInit, OnModuleDestroy 
   /**
    * Advanced: Increment counter
    */
-  async increment(key: string, amount = 1): Promise<ResultSpecification<number>> {
+  async increment(key: string, amount = 1): Promise<Result<number>> {
     if (!this.isEnabled) {
-      return ResultSpecification.ok(0);
+      return Result.ok(0);
     }
 
     try {
       const value = await this.redis.incrby(key, amount);
-      return ResultSpecification.ok(value);
+      return Result.ok(value);
     } catch (error) {
       this.logger.error(`Failed to increment cache key ${key}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'CACHE_INCREMENT_ERROR',
         errorParam: { key, error: this.extractErrorMessage(error) },
       });
@@ -284,17 +284,17 @@ export class RedisCacheService implements ICache, OnModuleInit, OnModuleDestroy 
   /**
    * Advanced: Decrement counter
    */
-  async decrement(key: string, amount = 1): Promise<ResultSpecification<number>> {
+  async decrement(key: string, amount = 1): Promise<Result<number>> {
     if (!this.isEnabled) {
-      return ResultSpecification.ok(0);
+      return Result.ok(0);
     }
 
     try {
       const value = await this.redis.decrby(key, amount);
-      return ResultSpecification.ok(value);
+      return Result.ok(value);
     } catch (error) {
       this.logger.error(`Failed to decrement cache key ${key}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'CACHE_DECREMENT_ERROR',
         errorParam: { key, error: this.extractErrorMessage(error) },
       });

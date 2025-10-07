@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@shared/domain/aggregate';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { IdVO } from '@shared/domain/vo';
 
 import { UserCreatedEvent } from '../event';
@@ -42,10 +42,10 @@ export class UserAggregate extends AggregateRoot<IdVO> {
     this._props = props;
   }
 
-  public static create(props: { email: UserEmail; name: UserName }): ResultSpecification<UserAggregate> {
+  public static create(props: { email: UserEmail; name: UserName }): Result<UserAggregate> {
     // Input validation - ensure VOs are valid
     if (props.email == null || props.name == null) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'USER_CREATION_MISSING_REQUIRED_FIELDS',
         errorParam: {},
       });
@@ -65,16 +65,16 @@ export class UserAggregate extends AggregateRoot<IdVO> {
 
     user.addDomainEvent(new UserCreatedEvent(user));
 
-    return ResultSpecification.ok<UserAggregate>(user);
+    return Result.ok<UserAggregate>(user);
   }
 
   public static fromValue(state: IUserProps): UserAggregate {
     return new UserAggregate(state);
   }
 
-  public updateName(name: UserName): ResultSpecification<void> {
+  public updateName(name: UserName): Result<void> {
     if (name == null) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'USER_UPDATE_NAME_INVALID',
         errorParam: {},
       });
@@ -82,18 +82,18 @@ export class UserAggregate extends AggregateRoot<IdVO> {
 
     // Business rule: Don't update if same value
     if (this._props.name.value === name.value) {
-      return ResultSpecification.ok<void>();
+      return Result.ok<void>();
     }
 
     this._props.name = name;
     this._props.updatedAt = new Date();
 
-    return ResultSpecification.ok<void>();
+    return Result.ok<void>();
   }
 
-  public updateEmail(email: UserEmail): ResultSpecification<void> {
+  public updateEmail(email: UserEmail): Result<void> {
     if (email == null) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'USER_UPDATE_EMAIL_INVALID',
         errorParam: {},
       });
@@ -101,12 +101,12 @@ export class UserAggregate extends AggregateRoot<IdVO> {
 
     // Business rule: Don't update if same value
     if (this._props.email.value === email.value) {
-      return ResultSpecification.ok<void>();
+      return Result.ok<void>();
     }
 
     this._props.email = email;
     this._props.updatedAt = new Date();
 
-    return ResultSpecification.ok<void>();
+    return Result.ok<void>();
   }
 }

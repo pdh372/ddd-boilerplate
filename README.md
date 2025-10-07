@@ -85,7 +85,7 @@ export class PricingDomainService {
     user: UserAggregate,
     items: OrderItemEntity[],
     marketConditions: MarketData,
-  ): Promise<ResultSpecification<PricingResult>> {
+  ): Promise<Result<PricingResult>> {
     // 15+ business rules implementation
     const userTier = this.calculateUserTier(user);
     const tierAdjustment = this.getTierPriceAdjustment(userTier, total);
@@ -111,7 +111,7 @@ export class PostgreSqlEventStore implements IEventStore {
     aggregateType: string,
     events: EventRoot[],
     expectedVersion?: number,
-  ): Promise<ResultSpecification<void>> {
+  ): Promise<Result<void>> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
 
@@ -120,7 +120,7 @@ export class PostgreSqlEventStore implements IEventStore {
       const currentVersion = await this.getCurrentVersionInTransaction(queryRunner, aggregateId);
       if (expectedVersion !== undefined && currentVersion !== expectedVersion) {
         await queryRunner.rollbackTransaction();
-        return ResultSpecification.fail({ errorKey: 'CONCURRENCY_ERROR' });
+        return Result.fail({ errorKey: 'CONCURRENCY_ERROR' });
       }
 
       // Atomic event persistence with global ordering
@@ -183,10 +183,10 @@ export class UserEmail {
     Object.freeze(this);
   }
 
-  static validate(input: string): ResultSpecification<UserEmail> {
+  static validate(input: string): Result<UserEmail> {
     // Professional validation using validator.js
     if (!validator.isEmail(input)) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'INVALID_EMAIL_FORMAT',
         errorParam: { input },
       });
@@ -197,7 +197,7 @@ export class UserEmail {
       outlookdotcom_remove_subaddress: false,
     });
 
-    return ResultSpecification.ok(new UserEmail(normalized));
+    return Result.ok(new UserEmail(normalized));
   }
 
   get value(): string {
@@ -214,7 +214,7 @@ export class UserEmail {
 
 ```typescript
 export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate> {
-  async execute(input: ICreateUserDto): Promise<ResultSpecification<UserAggregate>> {
+  async execute(input: ICreateUserDto): Promise<Result<UserAggregate>> {
     // 1. Validate inputs using Value Objects
     const emailResult = UserEmail.validate(input.email);
     if (emailResult.isFailure) return emailResult;
@@ -225,7 +225,7 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
     // 2. Check business rules
     const existingUser = await this.repository.findByEmail(emailResult.getValue);
     if (existingUser) {
-      return ResultSpecification.fail({ errorKey: 'EMAIL_ALREADY_EXISTS' });
+      return Result.fail({ errorKey: 'EMAIL_ALREADY_EXISTS' });
     }
 
     // 3. Create aggregate with domain events
@@ -237,7 +237,7 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
     if (userResult.isFailure) return userResult;
 
     // 4. Persist and publish events
-    return ResultSpecification.ok(await this.repository.save(userResult.getValue));
+    return Result.ok(await this.repository.save(userResult.getValue));
   }
 }
 ```

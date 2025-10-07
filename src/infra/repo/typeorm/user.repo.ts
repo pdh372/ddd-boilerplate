@@ -5,7 +5,7 @@ import { UserEmail, UserName } from '@module/user/domain/vo';
 
 import { Entity, Column, Repository, PrimaryGeneratedColumn } from 'typeorm';
 import { IdVO } from '@shared/domain/vo';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
 @Entity('users')
@@ -33,7 +33,7 @@ export class UserTypeOrmRepository implements IUserRepository {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  async save(entity: UserAggregate): Promise<ResultSpecification<UserAggregate>> {
+  async save(entity: UserAggregate): Promise<Result<UserAggregate>> {
     try {
       // Check if this is a new user (placeholder ID) or existing user
       if (entity.id.isPlaceholder()) {
@@ -45,7 +45,7 @@ export class UserTypeOrmRepository implements IUserRepository {
         userEntity.updatedAt = entity.updatedAt;
 
         const savedEntity = await this.userRepository.save(userEntity);
-        return ResultSpecification.ok(this.toDomain(savedEntity));
+        return Result.ok(this.toDomain(savedEntity));
       } else {
         // Existing user - update by ID
         const existingEntity = await this.userRepository.findOne({
@@ -53,7 +53,7 @@ export class UserTypeOrmRepository implements IUserRepository {
         });
 
         if (!existingEntity) {
-          return ResultSpecification.fail({
+          return Result.fail({
             errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
           });
         }
@@ -63,60 +63,60 @@ export class UserTypeOrmRepository implements IUserRepository {
         existingEntity.updatedAt = new Date();
 
         const updatedEntity = await this.userRepository.save(existingEntity);
-        return ResultSpecification.ok(this.toDomain(updatedEntity));
+        return Result.ok(this.toDomain(updatedEntity));
       }
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__USER__CREATION_FAILED,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });
     }
   }
 
-  async findById(id: IdVO): Promise<ResultSpecification<UserAggregate | null>> {
+  async findById(id: IdVO): Promise<Result<UserAggregate | null>> {
     try {
       const userEntity = await this.userRepository.findOne({
         where: { id: id.value },
       });
 
       if (!userEntity) {
-        return ResultSpecification.ok(null);
+        return Result.ok(null);
       }
 
-      return ResultSpecification.ok(this.toDomain(userEntity));
+      return Result.ok(this.toDomain(userEntity));
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });
     }
   }
 
-  async delete(id: IdVO): Promise<ResultSpecification<void>> {
+  async delete(id: IdVO): Promise<Result<void>> {
     try {
       await this.userRepository.delete({ id: id.value });
-      return ResultSpecification.ok(undefined);
+      return Result.ok(undefined);
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });
     }
   }
 
-  async findByEmail(email: UserEmail): Promise<ResultSpecification<UserAggregate | null>> {
+  async findByEmail(email: UserEmail): Promise<Result<UserAggregate | null>> {
     try {
       const userEntity = await this.userRepository.findOne({
         where: { email: email.value },
       });
 
       if (!userEntity) {
-        return ResultSpecification.ok(null);
+        return Result.ok(null);
       }
 
-      return ResultSpecification.ok(this.toDomain(userEntity));
+      return Result.ok(this.toDomain(userEntity));
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });

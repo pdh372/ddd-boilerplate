@@ -99,7 +99,7 @@ src/
 
 **Aggregates are consistency boundaries.** Use static factory methods:
 
-- **`create()`** - For new aggregates, emits domain events, returns `ResultSpecification<Aggregate>`
+- **`create()`** - For new aggregates, emits domain events, returns `Result<Aggregate>`
 - **`fromValue()`** - For database reconstruction, no events
 
 ```typescript
@@ -132,17 +132,17 @@ Example: `src/module/user/domain/vo/user-email.vo.ts`
 
 ### 3. Result Pattern (Railway-Oriented Programming)
 
-**All operations return `ResultSpecification<T>` for explicit error handling:**
+**All operations return `Result<T>` for explicit error handling:**
 
 ```typescript
 const result = UserEmail.validate(input);
 if (result.isFailure) {
-  return ResultSpecification.fail({
+  return Result.fail({
     errorKey: 'INVALID_EMAIL_FORMAT',
     errorParam: { input },
   });
 }
-return ResultSpecification.ok(result.getValue);
+return Result.ok(result.getValue);
 ```
 
 Key methods:
@@ -150,9 +150,9 @@ Key methods:
 - `result.isSuccess` / `result.isFailure` - Check state
 - `result.getValue` - Get value (only on success)
 - `result.errorKey` / `result.errorParam` - Get error details
-- `ResultSpecification.ok(value)` - Create success
-- `ResultSpecification.fail({ errorKey, errorParam })` - Create failure
-- `ResultSpecification.combine(results)` - Combine multiple results
+- `Result.ok(value)` - Create success
+- `Result.fail({ errorKey, errorParam })` - Create failure
+- `Result.combine(results)` - Combine multiple results
 
 Implementation: `src/shared/domain/specification/result.specification.ts:6`
 
@@ -163,7 +163,7 @@ Implementation: `src/shared/domain/specification/result.specification.ts:6`
 - Domain interfaces in `src/module/{context}/domain/repo/`
 - Implementations in `src/infra/repo/{typeorm|mongoose}/`
 - Always inject interface using dependency tokens, never implementation
-- Repositories return `ResultSpecification<T>`
+- Repositories return `Result<T>`
 - Mappers convert between domain aggregates and database entities using `toDomain()` method
 - Use `Entity.fromValue()` for DB reconstruction, `Entity.validate()` for external input
 
@@ -179,24 +179,24 @@ Standard flow:
 2. Check business rules (uniqueness, specifications)
 3. Create/update aggregate
 4. Persist via repository
-5. Return `ResultSpecification<T>`
+5. Return `Result<T>`
 
 ```typescript
 export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate> {
-  async execute(input: ICreateUserDto): Promise<ResultSpecification<UserAggregate>> {
+  async execute(input: ICreateUserDto): Promise<Result<UserAggregate>> {
     // 1. Validate inputs using VO.validate()
     const email = UserEmail.validate(input.email);
-    if (email.isFailure) return ResultSpecification.fail(email.error);
+    if (email.isFailure) return Result.fail(email.error);
 
     // 2. Check business rules (e.g., uniqueness)
     const existing = await this.repository.findByEmail(email.getValue);
-    if (existing) return ResultSpecification.fail({ errorKey: 'EMAIL_EXISTS' });
+    if (existing) return Result.fail({ errorKey: 'EMAIL_EXISTS' });
 
     // 3. Create aggregate and save
     const user = UserAggregate.create({ email: email.getValue, name: name.getValue });
     if (user.isFailure) return user;
 
-    return ResultSpecification.ok(await this.repository.save(user.getValue));
+    return Result.ok(await this.repository.save(user.getValue));
   }
 }
 ```
@@ -277,7 +277,7 @@ Guidelines:
 
 - Inject repository interfaces, never implementations
 - Validate cross-aggregate business rules
-- Return `ResultSpecification<T>`
+- Return `Result<T>`
 - Keep stateless (use `@Injectable()`)
 
 Example pattern:
@@ -285,7 +285,7 @@ Example pattern:
 ```typescript
 @Injectable()
 export class OrderCreationDomainService {
-  async createOrderForUser(userEmail: UserEmail, items: OrderItem[]): Promise<ResultSpecification<OrderAggregate>> {
+  async createOrderForUser(userEmail: UserEmail, items: OrderItem[]): Promise<Result<OrderAggregate>> {
     // 1. Cross-aggregate validation
     const userResult = await this.validateUser(userEmail);
     // 2. Business rule coordination
@@ -349,14 +349,14 @@ Location:
 ```typescript
 // Domain Layer (Interface)
 export interface ICache {
-  get<T>(key: string): Promise<ResultSpecification<T | null>>;
-  set<T>(key: string, value: T, ttl?: number): Promise<ResultSpecification<void>>;
-  delete(key: string): Promise<ResultSpecification<void>>;
-  deleteMany(keys: string[]): Promise<ResultSpecification<void>>;
-  exists(key: string): Promise<ResultSpecification<boolean>>;
-  clear(): Promise<ResultSpecification<void>>;
-  getMany<T>(keys: string[]): Promise<ResultSpecification<Record<string, T | null>>>;
-  setMany<T>(entries: Record<string, T>, ttl?: number): Promise<ResultSpecification<void>>;
+  get<T>(key: string): Promise<Result<T | null>>;
+  set<T>(key: string, value: T, ttl?: number): Promise<Result<void>>;
+  delete(key: string): Promise<Result<void>>;
+  deleteMany(keys: string[]): Promise<Result<void>>;
+  exists(key: string): Promise<Result<boolean>>;
+  clear(): Promise<Result<void>>;
+  getMany<T>(keys: string[]): Promise<Result<Record<string, T | null>>>;
+  setMany<T>(entries: Record<string, T>, ttl?: number): Promise<Result<void>>;
 }
 
 // Infrastructure Layer (Redis Implementation)
@@ -382,13 +382,13 @@ REDIS_ENABLED=true         # Enable/disable cache
 `src/module/user/app/use-case/get-user-with-cache.use-case.ts:37-66`
 
 ```typescript
-async execute(input: IGetUserDto): Promise<ResultSpecification<UserAggregate>> {
+async execute(input: IGetUserDto): Promise<Result<UserAggregate>> {
   // 1. Try cache first
   const cacheKey = `user:${userId}`;
   const cached = await this.cache.get<UserAggregate>(cacheKey);
 
   if (cached.isSuccess && cached.getValue != null) {
-    return ResultSpecification.ok(cached.getValue); // Cache hit
+    return Result.ok(cached.getValue); // Cache hit
   }
 
   // 2. Cache miss - get from DB
@@ -397,7 +397,7 @@ async execute(input: IGetUserDto): Promise<ResultSpecification<UserAggregate>> {
   // 3. Store in cache (30 minutes)
   await this.cache.set(cacheKey, user, 1800);
 
-  return ResultSpecification.ok(user);
+  return Result.ok(user);
 }
 ```
 
@@ -423,13 +423,13 @@ CacheKeyBuilder.pattern('user:'); // 'user:*'
 @Injectable()
 export class CacheInvalidationService {
   // Invalidate after user update
-  async invalidateUser(userId: string): Promise<ResultSpecification<void>>;
+  async invalidateUser(userId: string): Promise<Result<void>>;
 
   // Invalidate after order update
-  async invalidateOrder(orderId: string): Promise<ResultSpecification<void>>;
+  async invalidateOrder(orderId: string): Promise<Result<void>>;
 
   // Pattern-based invalidation
-  async invalidateAllUserCaches(userId: string): Promise<ResultSpecification<void>>;
+  async invalidateAllUserCaches(userId: string): Promise<Result<void>>;
 }
 ```
 

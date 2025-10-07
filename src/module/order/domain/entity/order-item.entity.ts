@@ -1,4 +1,4 @@
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 import { ProductName } from '../vo';
 import { IdVO } from '@shared/domain/vo';
@@ -42,15 +42,15 @@ export class OrderItemEntity {
     return this._props.quantity * this._props.unitPrice;
   }
 
-  public updateQuantity(quantity: number): ResultSpecification<void> {
+  public updateQuantity(quantity: number): Result<void> {
     if (quantity <= 0) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_QUANTITY,
         errorParam: { min: 1 },
       });
     }
     this._props.quantity = quantity;
-    return ResultSpecification.ok();
+    return Result.ok();
   }
 
   public static create(props: {
@@ -58,28 +58,28 @@ export class OrderItemEntity {
     productName: string;
     quantity: number;
     unitPrice: number;
-  }): ResultSpecification<OrderItemEntity> {
+  }): Result<OrderItemEntity> {
     if (props.quantity <= 0) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_QUANTITY,
         errorParam: { min: 1 },
       });
     }
 
     if (props.unitPrice <= 0) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_UNIT_PRICE,
       });
     }
 
     const productIdResult = IdVO.validate(props.productId);
     if (productIdResult.isFailure) {
-      return ResultSpecification.fail(productIdResult.error);
+      return Result.fail(productIdResult.error);
     }
 
     const productNameResult = ProductName.validate(props.productName);
     if (productNameResult.isFailure) {
-      return ResultSpecification.fail(productNameResult.error);
+      return Result.fail(productNameResult.error);
     }
 
     const orderItem = new OrderItemEntity({
@@ -90,6 +90,6 @@ export class OrderItemEntity {
       id: IdVO.createPlaceholder(),
     });
 
-    return ResultSpecification.ok(orderItem);
+    return Result.ok(orderItem);
   }
 }

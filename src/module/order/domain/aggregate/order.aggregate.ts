@@ -1,5 +1,5 @@
 import { AggregateRoot } from '@shared/domain/aggregate';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
 import { OrderItemEntity } from '../entity';
@@ -73,9 +73,9 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
       quantity: number;
       unitPrice: number;
     }[];
-  }): ResultSpecification<OrderAggregate> {
+  }): Result<OrderAggregate> {
     if (props.items.length === 0) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__EMPTY_ORDER,
       });
     }
@@ -86,14 +86,14 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
 
     const failedItem = orderItemResults.find((result) => result.isFailure);
     if (failedItem) {
-      return ResultSpecification.fail(failedItem.error);
+      return Result.fail(failedItem.error);
     }
 
     const orderItems = orderItemResults.map((result) => result.getValue);
 
     const customerIdResult = IdVO.validate(props.customerId);
     if (customerIdResult.isFailure) {
-      return ResultSpecification.fail(customerIdResult.error);
+      return Result.fail(customerIdResult.error);
     }
 
     const orderProps: IOrderProps = {
@@ -107,7 +107,7 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
 
     const order = new OrderAggregate(orderProps);
 
-    return ResultSpecification.ok<OrderAggregate>(order);
+    return Result.ok<OrderAggregate>(order);
   }
 
   public static fromValue(state: IOrderProps): OrderAggregate {
@@ -119,10 +119,10 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
     productName: string;
     quantity: number;
     unitPrice: number;
-  }): ResultSpecification<void> {
+  }): Result<void> {
     const itemResult = OrderItemEntity.create(itemProps);
     if (itemResult.isFailure) {
-      return ResultSpecification.fail(itemResult.error);
+      return Result.fail(itemResult.error);
     }
 
     const newItem = itemResult.getValue;
@@ -131,14 +131,14 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
 
     this.addDomainEvent(new OrderItemAddedEvent(this, newItem));
 
-    return ResultSpecification.ok();
+    return Result.ok();
   }
 
-  public updateItemQuantity(itemId: string, quantity: number): ResultSpecification<void> {
+  public updateItemQuantity(itemId: string, quantity: number): Result<void> {
     const item = this._props.items.find((item) => item.id.value === itemId);
 
     if (!item) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__ITEM_NOT_FOUND,
       });
     }
@@ -149,12 +149,12 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
     }
 
     this._props.updatedAt = new Date();
-    return ResultSpecification.ok();
+    return Result.ok();
   }
 
-  public removeItem(itemId: string): ResultSpecification<void> {
+  public removeItem(itemId: string): Result<void> {
     if (this._props.items.length === 1) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__CANNOT_REMOVE_LAST_ITEM,
       });
     }
@@ -162,7 +162,7 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
     const itemIndex = this._props.items.findIndex((item) => item.id.value === itemId);
 
     if (itemIndex === -1) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__ITEM_NOT_FOUND,
       });
     }
@@ -170,18 +170,18 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
     this._props.items.splice(itemIndex, 1);
     this._props.updatedAt = new Date();
 
-    return ResultSpecification.ok();
+    return Result.ok();
   }
 
-  public confirmOrder(): ResultSpecification<void> {
+  public confirmOrder(): Result<void> {
     if (this._props.status !== OrderStatus.PENDING) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_STATUS_TRANSITION,
       });
     }
 
     if (this._props.items.length === 0) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__EMPTY_ORDER,
       });
     }
@@ -192,12 +192,12 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
 
     this.addDomainEvent(new OrderStatusChangedEvent(this, previousStatus, OrderStatus.CONFIRMED));
 
-    return ResultSpecification.ok();
+    return Result.ok();
   }
 
-  public shipOrder(): ResultSpecification<void> {
+  public shipOrder(): Result<void> {
     if (this._props.status !== OrderStatus.CONFIRMED) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_STATUS_TRANSITION,
       });
     }
@@ -208,12 +208,12 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
 
     this.addDomainEvent(new OrderStatusChangedEvent(this, previousStatus, OrderStatus.SHIPPED));
 
-    return ResultSpecification.ok();
+    return Result.ok();
   }
 
-  public deliverOrder(): ResultSpecification<void> {
+  public deliverOrder(): Result<void> {
     if (this._props.status !== OrderStatus.SHIPPED) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_STATUS_TRANSITION,
       });
     }
@@ -224,12 +224,12 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
 
     this.addDomainEvent(new OrderStatusChangedEvent(this, previousStatus, OrderStatus.DELIVERED));
 
-    return ResultSpecification.ok();
+    return Result.ok();
   }
 
-  public cancelOrder(): ResultSpecification<void> {
+  public cancelOrder(): Result<void> {
     if (this._props.status === OrderStatus.DELIVERED) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__INVALID_STATUS_TRANSITION,
       });
     }
@@ -240,6 +240,6 @@ export class OrderAggregate extends AggregateRoot<IdVO> {
 
     this.addDomainEvent(new OrderStatusChangedEvent(this, previousStatus, OrderStatus.CANCELLED));
 
-    return ResultSpecification.ok();
+    return Result.ok();
   }
 }

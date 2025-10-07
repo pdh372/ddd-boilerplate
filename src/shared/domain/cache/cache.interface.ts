@@ -1,4 +1,4 @@
-import type { ResultSpecification } from '../specification';
+import type { Result } from '../specification';
 
 /**
  * Cache Interface - Domain layer abstraction
@@ -12,7 +12,7 @@ export interface ICache {
    * @param key Cache key
    * @returns Result containing cached value or null if not found
    */
-  get<T>(key: string): Promise<ResultSpecification<T | null>>;
+  get<T>(key: string): Promise<Result<T | null>>;
 
   /**
    * Set value in cache
@@ -21,41 +21,41 @@ export interface ICache {
    * @param ttl Time-to-live in seconds (optional, uses default if not provided)
    * @returns Result indicating success or failure
    */
-  set<T>(key: string, value: T, ttl?: number): Promise<ResultSpecification<void>>;
+  set<T>(key: string, value: T, ttl?: number): Promise<Result<void>>;
 
   /**
    * Delete value from cache
    * @param key Cache key
    * @returns Result indicating success or failure
    */
-  delete(key: string): Promise<ResultSpecification<void>>;
+  delete(key: string): Promise<Result<void>>;
 
   /**
    * Delete multiple keys from cache
    * @param keys Array of cache keys
    * @returns Result indicating success or failure
    */
-  deleteMany(keys: string[]): Promise<ResultSpecification<void>>;
+  deleteMany(keys: string[]): Promise<Result<void>>;
 
   /**
    * Check if key exists in cache
    * @param key Cache key
    * @returns Result containing boolean indicating existence
    */
-  exists(key: string): Promise<ResultSpecification<boolean>>;
+  exists(key: string): Promise<Result<boolean>>;
 
   /**
    * Clear all cache entries (use with caution)
    * @returns Result indicating success or failure
    */
-  clear(): Promise<ResultSpecification<void>>;
+  clear(): Promise<Result<void>>;
 
   /**
    * Get multiple values from cache
    * @param keys Array of cache keys
    * @returns Result containing record of key-value pairs
    */
-  getMany<T>(keys: string[]): Promise<ResultSpecification<Record<string, T | null>>>;
+  getMany<T>(keys: string[]): Promise<Result<Record<string, T | null>>>;
 
   /**
    * Set multiple values in cache
@@ -63,7 +63,7 @@ export interface ICache {
    * @param ttl Time-to-live in seconds (optional)
    * @returns Result indicating success or failure
    */
-  setMany<T>(entries: Record<string, T>, ttl?: number): Promise<ResultSpecification<void>>;
+  setMany<T>(entries: Record<string, T>, ttl?: number): Promise<Result<void>>;
 
   /**
    * Set value with expiration time (alias for set with ttl)
@@ -72,14 +72,14 @@ export interface ICache {
    * @param ttl Time-to-live in seconds
    * @returns Result indicating success or failure
    */
-  setWithExpiry<T>(key: string, value: T, ttl: number): Promise<ResultSpecification<void>>;
+  setWithExpiry<T>(key: string, value: T, ttl: number): Promise<Result<void>>;
 
   /**
    * Get keys matching pattern
    * @param pattern Pattern to match (Redis pattern syntax)
    * @returns Result containing array of matching keys
    */
-  keys(pattern: string): Promise<ResultSpecification<string[]>>;
+  keys(pattern: string): Promise<Result<string[]>>;
 }
 
 /**

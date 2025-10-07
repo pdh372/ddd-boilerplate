@@ -36,7 +36,7 @@
 ### 3. Error Handling (10/10)
 
 **Railway-Oriented Programming:**
-- ✅ Consistent `ResultSpecification<T>` pattern throughout
+- ✅ Consistent `Result<T>` pattern throughout
 - ✅ No raw `throw` statements in domain layer
 - ✅ Multilingual error support (EN/VI)
 - ✅ Proper HTTP status code mapping
@@ -47,7 +47,7 @@
 // src/module/user/app/use-case/create-user.use-case.ts:10
 const email = UserEmail.validate(input.email);
 if (email.isFailure) {
-  return ResultSpecification.fail({ errorKey, errorParam });
+  return Result.fail({ errorKey, errorParam });
 }
 ```
 
@@ -100,7 +100,7 @@ if (email.isFailure) {
 
 **Production-ready cache implementation:**
 - ✅ **DDD Compliant** - Domain interface (`ICache`), Infrastructure implementation (`RedisCacheService`)
-- ✅ **Result Pattern** - All cache operations return `ResultSpecification<T>`
+- ✅ **Result Pattern** - All cache operations return `Result<T>`
 - ✅ **Cache-Aside Pattern** - Example in `GetUserWithCacheUseCase`
 - ✅ **Type Safe** - Generic support: `cache.get<T>(key)`
 - ✅ **Production Features**:
@@ -122,7 +122,7 @@ Location: `src/module/user/app/use-case/get-user-with-cache.use-case.ts:37-66`
 // 1. Try cache first
 const cached = await this.cache.get<UserAggregate>(cacheKey);
 if (cached.isSuccess && cached.getValue != null) {
-  return ResultSpecification.ok(cached.getValue);
+  return Result.ok(cached.getValue);
 }
 
 // 2. Cache miss - get from DB
@@ -196,10 +196,10 @@ try {
   const saved = await this._repo.save(aggregate);
   await this._eventService.publishEvents(saved.domainEvents);
   saved.clearEvents();
-  return ResultSpecification.ok(saved);
+  return Result.ok(saved);
 } catch (error) {
   // Return failure result - repository should handle rollback
-  return ResultSpecification.fail({
+  return Result.fail({
     errorKey: 'ERROR__CREATION_FAILED',
     errorParam: { reason: error.message }
   });
@@ -324,7 +324,7 @@ await this.retryWithBackoff(async () => {
 
 **Location:** All repository implementations
 
-**Issue:** Repositories throw errors instead of returning `ResultSpecification<T>`.
+**Issue:** Repositories throw errors instead of returning `Result<T>`.
 
 **Fix Applied:**
 ```typescript
@@ -334,12 +334,12 @@ if (!existingEntity) {
 }
 
 // Fixed (RETURNS RESULT):
-async save(entity: UserAggregate): Promise<ResultSpecification<UserAggregate>> {
+async save(entity: UserAggregate): Promise<Result<UserAggregate>> {
   try {
     const savedEntity = await this.repository.save(entity);
-    return ResultSpecification.ok(this.toDomain(savedEntity));
+    return Result.ok(this.toDomain(savedEntity));
   } catch (error) {
-    return ResultSpecification.fail({
+    return Result.fail({
       errorKey: TRANSLATOR_KEY.ERROR__USER__CREATION_FAILED,
       errorParam: { reason: error.message }
     });
@@ -348,12 +348,12 @@ async save(entity: UserAggregate): Promise<ResultSpecification<UserAggregate>> {
 ```
 
 **Changes Made:**
-1. ✅ Updated `IUserRepository` interface to return `ResultSpecification<T>`
-2. ✅ Updated `IOrderRepository` interface to return `ResultSpecification<T>`
+1. ✅ Updated `IUserRepository` interface to return `Result<T>`
+2. ✅ Updated `IOrderRepository` interface to return `Result<T>`
 3. ✅ Updated TypeORM `UserTypeOrmRepository` (4 methods)
 4. ✅ Updated Mongoose `UserMongooseRepository` (4 methods)
 5. ✅ Updated Mongoose `OrderMongooseRepository` (4 methods)
-6. ✅ Updated all use cases to unwrap ResultSpecification (7 use cases):
+6. ✅ Updated all use cases to unwrap Result (7 use cases):
    - CreateUserUseCase
    - GetUserUseCase
    - GetUserWithCacheUseCase
@@ -400,7 +400,7 @@ async save(entity: UserAggregate): Promise<ResultSpecification<UserAggregate>> {
 ### Should Fix (Next Sprint):
 5. ⚠️ **Implement pagination in findByCustomerId** (MEDIUM)
 6. ⚠️ **Add input sanitization to DTOs** (MEDIUM)
-7. ✅ **Make repositories return ResultSpecification** (MEDIUM) - FIXED 2025-10-07
+7. ✅ **Make repositories return Result** (MEDIUM) - FIXED 2025-10-07
 8. ⚠️ **Add retry logic to event store** (MEDIUM)
 
 ### Nice to Have:
@@ -426,12 +426,12 @@ export abstract class BaseUseCase<TInput, TOutput> {
   protected async saveAggregateWithEvents<T extends AggregateRoot>(
     aggregate: T,
     repository: IRepository<T>,
-  ): Promise<ResultSpecification<T>> {
+  ): Promise<Result<T>> {
     return this.transactionService.execute(async () => {
       const saved = await repository.save(aggregate);
       await this.eventService.publishEvents(aggregate.domainEvents);
       aggregate.clearEvents();
-      return ResultSpecification.ok(saved);
+      return Result.ok(saved);
     });
   }
 }
@@ -444,9 +444,9 @@ export abstract class BaseUseCase<TInput, TOutput> {
 ```typescript
 // src/module/user/domain/repo/user.repo.ts
 export interface IUserRepository {
-  save(entity: UserAggregate): Promise<ResultSpecification<UserAggregate>>;
-  findById(id: IdVO): Promise<ResultSpecification<UserAggregate | null>>;
-  findByEmail(email: UserEmail): Promise<ResultSpecification<UserAggregate | null>>;
+  save(entity: UserAggregate): Promise<Result<UserAggregate>>;
+  findById(id: IdVO): Promise<Result<UserAggregate | null>>;
+  findByEmail(email: UserEmail): Promise<Result<UserAggregate | null>>;
 }
 ```
 
@@ -459,7 +459,7 @@ export interface IOrderRepository {
   findByCustomerId(
     customerId: IdVO,
     options?: { limit?: number; offset?: number }
-  ): Promise<ResultSpecification<{ orders: OrderAggregate[]; total: number }>>;
+  ): Promise<Result<{ orders: OrderAggregate[]; total: number }>>;
 }
 ```
 

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { IEventStore, StoredDomainEvent } from '@shared/domain/event-store';
 import type { EventRoot } from '@shared/domain/event';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -20,14 +20,14 @@ export class InMemoryEventStore implements IEventStore {
     aggregateType: string,
     events: EventRoot[],
     expectedVersion?: number,
-  ): Promise<ResultSpecification<void>> {
+  ): Promise<Result<void>> {
     try {
       // Optimistic concurrency check
       if (expectedVersion !== undefined) {
         const currentVersion = this.getCurrentVersion(aggregateId);
         if (currentVersion !== expectedVersion) {
           return Promise.resolve(
-            ResultSpecification.fail({
+            Result.fail({
               errorKey: 'EVENT_STORE_CONCURRENCY_ERROR',
               errorParam: { expected: expectedVersion, current: currentVersion },
             }),
@@ -58,11 +58,11 @@ export class InMemoryEventStore implements IEventStore {
       this.globalVersion += events.length;
 
       this.logger.debug(`Appended ${events.length} events for aggregate ${aggregateId}`);
-      return Promise.resolve(ResultSpecification.ok());
+      return Promise.resolve(Result.ok());
     } catch (error) {
       this.logger.error('Failed to append events:', error);
       return Promise.resolve(
-        ResultSpecification.fail({
+        Result.fail({
           errorKey: 'EVENT_STORE_APPEND_ERROR',
           errorParam: { error: String(error) },
         }),
@@ -70,7 +70,7 @@ export class InMemoryEventStore implements IEventStore {
     }
   }
 
-  getEventsForAggregate(aggregateId: string, fromVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>> {
+  getEventsForAggregate(aggregateId: string, fromVersion?: number): Promise<Result<StoredDomainEvent[]>> {
     try {
       const events = this.events
         .filter((event) => event.aggregateId === aggregateId)
@@ -78,11 +78,11 @@ export class InMemoryEventStore implements IEventStore {
         .sort((a, b) => a.eventVersion - b.eventVersion);
 
       this.logger.debug(`Retrieved ${events.length} events for aggregate ${aggregateId}`);
-      return Promise.resolve(ResultSpecification.ok(events));
+      return Promise.resolve(Result.ok(events));
     } catch (error) {
       this.logger.error('Failed to get events for aggregate:', error);
       return Promise.resolve(
-        ResultSpecification.fail({
+        Result.fail({
           errorKey: 'EVENT_STORE_GET_ERROR',
           errorParam: { error: String(error) },
         }),
@@ -90,7 +90,7 @@ export class InMemoryEventStore implements IEventStore {
     }
   }
 
-  getEventsByType(eventType: string, fromVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>> {
+  getEventsByType(eventType: string, fromVersion?: number): Promise<Result<StoredDomainEvent[]>> {
     try {
       const events = this.events
         .filter((event) => event.eventType === eventType)
@@ -98,11 +98,11 @@ export class InMemoryEventStore implements IEventStore {
         .sort((a, b) => a.eventVersion - b.eventVersion);
 
       this.logger.debug(`Retrieved ${events.length} events of type ${eventType}`);
-      return Promise.resolve(ResultSpecification.ok(events));
+      return Promise.resolve(Result.ok(events));
     } catch (error) {
       this.logger.error('Failed to get events by type:', error);
       return Promise.resolve(
-        ResultSpecification.fail({
+        Result.fail({
           errorKey: 'EVENT_STORE_GET_ERROR',
           errorParam: { error: String(error) },
         }),
@@ -110,7 +110,7 @@ export class InMemoryEventStore implements IEventStore {
     }
   }
 
-  getAllEvents(fromVersion?: number, toVersion?: number): Promise<ResultSpecification<StoredDomainEvent[]>> {
+  getAllEvents(fromVersion?: number, toVersion?: number): Promise<Result<StoredDomainEvent[]>> {
     try {
       const events = this.events
         .filter((event) => fromVersion === undefined || event.eventVersion > fromVersion)
@@ -118,11 +118,11 @@ export class InMemoryEventStore implements IEventStore {
         .sort((a, b) => a.eventVersion - b.eventVersion);
 
       this.logger.debug(`Retrieved ${events.length} events from store`);
-      return Promise.resolve(ResultSpecification.ok(events));
+      return Promise.resolve(Result.ok(events));
     } catch (error) {
       this.logger.error('Failed to get all events:', error);
       return Promise.resolve(
-        ResultSpecification.fail({
+        Result.fail({
           errorKey: 'EVENT_STORE_GET_ERROR',
           errorParam: { error: String(error) },
         }),
@@ -132,22 +132,22 @@ export class InMemoryEventStore implements IEventStore {
 
   async getEventsForAggregates(
     aggregateIds: string[],
-  ): Promise<ResultSpecification<Record<string, StoredDomainEvent[]>>> {
+  ): Promise<Result<Record<string, StoredDomainEvent[]>>> {
     try {
       const result: Record<string, StoredDomainEvent[]> = {};
 
       for (const aggregateId of aggregateIds) {
         const eventsResult = await this.getEventsForAggregate(aggregateId);
         if (eventsResult.isFailure) {
-          return ResultSpecification.fail(eventsResult.error);
+          return Result.fail(eventsResult.error);
         }
         result[aggregateId] = eventsResult.getValue;
       }
 
-      return ResultSpecification.ok(result);
+      return Result.ok(result);
     } catch (error) {
       this.logger.error('Failed to get events for aggregates:', error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'EVENT_STORE_GET_ERROR',
         errorParam: { error: String(error) },
       });
@@ -159,15 +159,15 @@ export class InMemoryEventStore implements IEventStore {
     aggregateType: string,
     snapshot: Record<string, unknown>,
     version: number,
-  ): Promise<ResultSpecification<void>> {
+  ): Promise<Result<void>> {
     try {
       this.snapshots.set(aggregateId, { snapshot, version });
       this.logger.debug(`Saved snapshot for aggregate ${aggregateId} at version ${version}`);
-      return Promise.resolve(ResultSpecification.ok());
+      return Promise.resolve(Result.ok());
     } catch (error) {
       this.logger.error('Failed to save snapshot:', error);
       return Promise.resolve(
-        ResultSpecification.fail({
+        Result.fail({
           errorKey: 'EVENT_STORE_SNAPSHOT_ERROR',
           errorParam: { error: String(error) },
         }),
@@ -177,15 +177,15 @@ export class InMemoryEventStore implements IEventStore {
 
   getSnapshot(
     aggregateId: string,
-  ): Promise<ResultSpecification<{ snapshot: Record<string, unknown>; version: number } | null>> {
+  ): Promise<Result<{ snapshot: Record<string, unknown>; version: number } | null>> {
     try {
       const snapshot = this.snapshots.get(aggregateId) ?? null;
       this.logger.debug(`Retrieved snapshot for aggregate ${aggregateId}: ${snapshot ? 'found' : 'not found'}`);
-      return Promise.resolve(ResultSpecification.ok(snapshot));
+      return Promise.resolve(Result.ok(snapshot));
     } catch (error) {
       this.logger.error('Failed to get snapshot:', error);
       return Promise.resolve(
-        ResultSpecification.fail({
+        Result.fail({
           errorKey: 'EVENT_STORE_SNAPSHOT_ERROR',
           errorParam: { error: String(error) },
         }),

@@ -5,7 +5,7 @@ import { type IUserRepository, UserAggregate } from '@module/user/domain';
 import { UserEmail, UserName } from '@module/user/domain/vo';
 import { IdVO } from '@shared/domain/vo';
 import { DomainEventPublisher } from '@shared/domain/event';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
 @Schema({ collection: 'users' })
@@ -35,7 +35,7 @@ export class UserMongooseRepository implements IUserRepository {
     private readonly eventPublisher: DomainEventPublisher,
   ) {}
 
-  async save(userAggregate: UserAggregate): Promise<ResultSpecification<UserAggregate>> {
+  async save(userAggregate: UserAggregate): Promise<Result<UserAggregate>> {
     try {
       // Check if this is a new user (placeholder ID) or existing user
       if (userAggregate.id.value === 'PENDING_DB_GENERATION') {
@@ -53,7 +53,7 @@ export class UserMongooseRepository implements IUserRepository {
         // Publish domain events
         this.eventPublisher.publishEventsForAggregate(userAggregate);
 
-        return ResultSpecification.ok(savedUser);
+        return Result.ok(savedUser);
       } else {
         // Existing user - update
         const updatedDoc = await this.userModel.findByIdAndUpdate(
@@ -67,61 +67,61 @@ export class UserMongooseRepository implements IUserRepository {
         );
 
         if (!updatedDoc) {
-          return ResultSpecification.fail({
+          return Result.fail({
             errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
           });
         }
 
-        return ResultSpecification.ok(this.toDomain(updatedDoc));
+        return Result.ok(this.toDomain(updatedDoc));
       }
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__USER__CREATION_FAILED,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });
     }
   }
 
-  async findById(id: IdVO): Promise<ResultSpecification<UserAggregate | null>> {
+  async findById(id: IdVO): Promise<Result<UserAggregate | null>> {
     try {
       const userDoc = await this.userModel.findById(id.value);
 
       if (!userDoc) {
-        return ResultSpecification.ok(null);
+        return Result.ok(null);
       }
 
-      return ResultSpecification.ok(this.toDomain(userDoc));
+      return Result.ok(this.toDomain(userDoc));
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });
     }
   }
 
-  async delete(id: IdVO): Promise<ResultSpecification<void>> {
+  async delete(id: IdVO): Promise<Result<void>> {
     try {
       await this.userModel.findByIdAndDelete(id);
-      return ResultSpecification.ok(undefined);
+      return Result.ok(undefined);
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });
     }
   }
 
-  async findByEmail(email: UserEmail): Promise<ResultSpecification<UserAggregate | null>> {
+  async findByEmail(email: UserEmail): Promise<Result<UserAggregate | null>> {
     try {
       const userDoc = await this.userModel.findOne({ email: email.value });
 
       if (!userDoc) {
-        return ResultSpecification.ok(null);
+        return Result.ok(null);
       }
 
-      return ResultSpecification.ok(this.toDomain(userDoc));
+      return Result.ok(this.toDomain(userDoc));
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import type { UserAggregate } from '@module/user/domain/aggregate';
 import type { OrderAggregate } from '@module/order/domain/aggregate';
 import { OrderItemEntity } from '../entity';
@@ -38,7 +38,7 @@ export class PricingDomainService {
     user: UserAggregate,
     items: OrderItemEntity[],
     marketConditions = { demand: 1.0, seasonality: 1.0 },
-  ): Promise<ResultSpecification<PricingResult>> {
+  ): Promise<Result<PricingResult>> {
     return new Promise((resolve) => {
       try {
         // Complex business logic: Dynamic pricing based on multiple factors
@@ -65,7 +65,7 @@ export class PricingDomainService {
         this.logger.debug(`Complex pricing calculated for user ${user.id.value}: ${originalTotal} -> ${adjustedTotal}`);
 
         resolve(
-          ResultSpecification.ok({
+          Result.ok({
             originalTotal,
             adjustedTotal,
             priceAdjustments,
@@ -75,7 +75,7 @@ export class PricingDomainService {
       } catch (error) {
         this.logger.error('Failed to calculate dynamic pricing:', error);
         resolve(
-          ResultSpecification.fail({
+          Result.fail({
             errorKey: 'PRICING_CALCULATION_ERROR',
             errorParam: { error: String(error) },
           }),
@@ -88,7 +88,7 @@ export class PricingDomainService {
     user: UserAggregate,
     order: OrderAggregate,
     promoCode?: string | null,
-  ): Promise<ResultSpecification<DiscountResult>> {
+  ): Promise<Result<DiscountResult>> {
     try {
       const appliedDiscounts: DiscountResult['appliedDiscounts'] = [];
 
@@ -147,13 +147,13 @@ export class PricingDomainService {
 
       const totalDiscount = appliedDiscounts.reduce((sum, discount) => sum + discount.amount, 0);
 
-      return ResultSpecification.ok({
+      return Result.ok({
         totalDiscount,
         appliedDiscounts,
       });
     } catch (error) {
       this.logger.error('Failed to calculate discounts:', error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'DISCOUNT_CALCULATION_ERROR',
         errorParam: { error: String(error) },
       });
@@ -164,13 +164,13 @@ export class PricingDomainService {
     originalPrice: number,
     calculatedPrice: number,
     discounts: DiscountResult,
-  ): ResultSpecification<boolean> {
+  ): Result<boolean> {
     // Complex business rules for pricing integrity
     const minimumPrice = originalPrice * 0.1;
     const finalPrice = calculatedPrice - discounts.totalDiscount;
 
     if (finalPrice < minimumPrice) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'PRICING_INTEGRITY_VIOLATION',
         errorParam: {
           finalPrice,
@@ -182,7 +182,7 @@ export class PricingDomainService {
 
     const maxDiscount = originalPrice * 0.8;
     if (discounts.totalDiscount > maxDiscount) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'DISCOUNT_LIMIT_EXCEEDED',
         errorParam: {
           totalDiscount: discounts.totalDiscount,
@@ -192,7 +192,7 @@ export class PricingDomainService {
       });
     }
 
-    return ResultSpecification.ok(true);
+    return Result.ok(true);
   }
 
   private calculateUserTier(user: UserAggregate): 'bronze' | 'silver' | 'gold' | 'platinum' {
@@ -291,7 +291,7 @@ export class PricingDomainService {
     return Promise.resolve(daysSinceCreation <= 7);
   }
 
-  private validateAndApplyPromoCode(code: string, orderValue: number): Promise<ResultSpecification<number>> {
+  private validateAndApplyPromoCode(code: string, orderValue: number): Promise<Result<number>> {
     // Complex promo code validation with business rules
     const validPromoCodes = {
       WELCOME10: { discount: 0.1, minOrder: 50, maxUses: 1000 },
@@ -302,7 +302,7 @@ export class PricingDomainService {
     const promo = validPromoCodes[code as keyof typeof validPromoCodes];
     if (promo == null) {
       return Promise.resolve(
-        ResultSpecification.fail({
+        Result.fail({
           errorKey: 'INVALID_PROMO_CODE',
           errorParam: { code },
         }),
@@ -311,13 +311,13 @@ export class PricingDomainService {
 
     if (orderValue < promo.minOrder) {
       return Promise.resolve(
-        ResultSpecification.fail({
+        Result.fail({
           errorKey: 'PROMO_MIN_ORDER_NOT_MET',
           errorParam: { code, required: promo.minOrder, current: orderValue },
         }),
       );
     }
 
-    return Promise.resolve(ResultSpecification.ok(orderValue * promo.discount));
+    return Promise.resolve(Result.ok(orderValue * promo.discount));
   }
 }

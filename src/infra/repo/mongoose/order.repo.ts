@@ -5,7 +5,7 @@ import { type IOrderRepository, OrderAggregate, OrderStatus } from '@module/orde
 import { ProductName } from '@module/order/domain/vo';
 import { OrderItemEntity } from '@module/order/domain/entity';
 import { IdVO } from '@shared/domain/vo';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
 @Schema()
@@ -57,7 +57,7 @@ export class OrderMongooseRepository implements IOrderRepository {
     private readonly orderModel: Model<OrderDocument>,
   ) {}
 
-  async save(orderAggregate: OrderAggregate): Promise<ResultSpecification<OrderAggregate>> {
+  async save(orderAggregate: OrderAggregate): Promise<Result<OrderAggregate>> {
     try {
       // Check if this is a new order (placeholder ID) or existing order
       if (orderAggregate.id.isPlaceholder()) {
@@ -76,7 +76,7 @@ export class OrderMongooseRepository implements IOrderRepository {
         };
 
         const newDoc = await this.orderModel.create(orderDoc);
-        return ResultSpecification.ok(this.toDomain(newDoc));
+        return Result.ok(this.toDomain(newDoc));
       } else {
         // Existing order - update
         const updatedDoc = await this.orderModel.findByIdAndUpdate(
@@ -95,57 +95,57 @@ export class OrderMongooseRepository implements IOrderRepository {
         );
 
         if (!updatedDoc) {
-          return ResultSpecification.fail({
+          return Result.fail({
             errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,
           });
         }
 
-        return ResultSpecification.ok(this.toDomain(updatedDoc));
+        return Result.ok(this.toDomain(updatedDoc));
       }
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__CREATION_FAILED,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });
     }
   }
 
-  async findById(id: IdVO): Promise<ResultSpecification<OrderAggregate | null>> {
+  async findById(id: IdVO): Promise<Result<OrderAggregate | null>> {
     try {
       const orderDoc = await this.orderModel.findById(id);
 
       if (!orderDoc) {
-        return ResultSpecification.ok(null);
+        return Result.ok(null);
       }
 
-      return ResultSpecification.ok(this.toDomain(orderDoc));
+      return Result.ok(this.toDomain(orderDoc));
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });
     }
   }
 
-  async findByCustomerId(customerId: IdVO): Promise<ResultSpecification<OrderAggregate[]>> {
+  async findByCustomerId(customerId: IdVO): Promise<Result<OrderAggregate[]>> {
     try {
       const orderDocs = await this.orderModel.find({ customerId });
       const orders = orderDocs.map((doc) => this.toDomain(doc));
-      return ResultSpecification.ok(orders);
+      return Result.ok(orders);
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });
     }
   }
 
-  async delete(id: IdVO): Promise<ResultSpecification<void>> {
+  async delete(id: IdVO): Promise<Result<void>> {
     try {
       await this.orderModel.findByIdAndDelete(id);
-      return ResultSpecification.ok(undefined);
+      return Result.ok(undefined);
     } catch (error) {
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });

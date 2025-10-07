@@ -1,6 +1,6 @@
 import type { IOrderRepository, OrderAggregate } from '@module/order/domain';
 import type { UseCase } from '@shared/app/use-case';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 import { IdVO } from '@shared/domain/vo';
 import type { DomainEventService } from '@shared/app/service/domain-event.service';
@@ -17,11 +17,11 @@ export class UpdateOrderItemQuantityUseCase implements UseCase<IUpdateOrderItemQ
     private readonly _domainEventService: DomainEventService,
   ) {}
 
-  async execute(input: IUpdateOrderItemQuantityDto): Promise<ResultSpecification<OrderAggregate>> {
+  async execute(input: IUpdateOrderItemQuantityDto): Promise<Result<OrderAggregate>> {
     // Validate order ID
     const orderIdResult = IdVO.validate(input.orderId);
     if (orderIdResult.isFailure) {
-      return ResultSpecification.fail<OrderAggregate>({
+      return Result.fail<OrderAggregate>({
         errorKey: orderIdResult.errorKey,
         errorParam: orderIdResult.errorParam,
       });
@@ -30,12 +30,12 @@ export class UpdateOrderItemQuantityUseCase implements UseCase<IUpdateOrderItemQ
     // Find order
     const orderResult = await this._orderRepository.findById(orderIdResult.getValue);
     if (orderResult.isFailure) {
-      return ResultSpecification.fail<OrderAggregate>(orderResult.error);
+      return Result.fail<OrderAggregate>(orderResult.error);
     }
 
     const order = orderResult.getValue;
     if (!order) {
-      return ResultSpecification.fail<OrderAggregate>({
+      return Result.fail<OrderAggregate>({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,
       });
     }
@@ -43,7 +43,7 @@ export class UpdateOrderItemQuantityUseCase implements UseCase<IUpdateOrderItemQ
     // Update item quantity
     const updateResult = order.updateItemQuantity(input.itemId, input.quantity);
     if (updateResult.isFailure) {
-      return ResultSpecification.fail<OrderAggregate>({
+      return Result.fail<OrderAggregate>({
         errorKey: updateResult.errorKey,
         errorParam: updateResult.errorParam,
       });
@@ -54,7 +54,7 @@ export class UpdateOrderItemQuantityUseCase implements UseCase<IUpdateOrderItemQ
       const savedResult = await this._orderRepository.save(order);
 
       if (savedResult.isFailure) {
-        return ResultSpecification.fail<OrderAggregate>(savedResult.error);
+        return Result.fail<OrderAggregate>(savedResult.error);
       }
 
       const savedOrder = savedResult.getValue;
@@ -66,11 +66,11 @@ export class UpdateOrderItemQuantityUseCase implements UseCase<IUpdateOrderItemQ
       // Clear events after successful publishing
       savedOrder.clearEvents();
 
-      return ResultSpecification.ok<OrderAggregate>(savedOrder);
+      return Result.ok<OrderAggregate>(savedOrder);
     } catch (error) {
       // If event publishing fails, return failure result
       // Repository implementations should handle transaction rollback
-      return ResultSpecification.fail<OrderAggregate>({
+      return Result.fail<OrderAggregate>({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__CREATION_FAILED,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });

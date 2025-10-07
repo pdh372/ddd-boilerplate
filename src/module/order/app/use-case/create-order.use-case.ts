@@ -1,6 +1,6 @@
 import { type IOrderRepository, OrderAggregate } from '@module/order/domain';
 import type { UseCase } from '@shared/app/use-case';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import type { ICreateOrderDto } from '../dto';
 import type { DomainEventService } from '@shared/app/service/domain-event.service';
 
@@ -10,14 +10,14 @@ export class CreateOrderUseCase implements UseCase<ICreateOrderDto, OrderAggrega
     private readonly _domainEventService: DomainEventService,
   ) {}
 
-  async execute(input: ICreateOrderDto): Promise<ResultSpecification<OrderAggregate>> {
+  async execute(input: ICreateOrderDto): Promise<Result<OrderAggregate>> {
     const newOrderResult = OrderAggregate.create({
       customerId: input.customerId,
       items: input.items,
     });
 
     if (newOrderResult.isFailure) {
-      return ResultSpecification.fail<OrderAggregate>({
+      return Result.fail<OrderAggregate>({
         errorKey: newOrderResult.errorKey,
         errorParam: newOrderResult.errorParam,
       });
@@ -30,7 +30,7 @@ export class CreateOrderUseCase implements UseCase<ICreateOrderDto, OrderAggrega
       const savedResult = await this._orderRepository.save(order);
 
       if (savedResult.isFailure) {
-        return ResultSpecification.fail<OrderAggregate>(savedResult.error);
+        return Result.fail<OrderAggregate>(savedResult.error);
       }
 
       const orderSaved = savedResult.getValue;
@@ -42,11 +42,11 @@ export class CreateOrderUseCase implements UseCase<ICreateOrderDto, OrderAggrega
       // Clear events after successful publishing
       orderSaved.clearEvents();
 
-      return ResultSpecification.ok<OrderAggregate>(orderSaved);
+      return Result.ok<OrderAggregate>(orderSaved);
     } catch (error) {
       // If event publishing fails, return failure result
       // Repository implementations should handle transaction rollback
-      return ResultSpecification.fail<OrderAggregate>({
+      return Result.fail<OrderAggregate>({
         errorKey: 'ERROR__ORDER__CREATION_FAILED',
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 
 /**
  * Application Service for Transaction Management
@@ -15,9 +15,9 @@ export class TransactionService {
    * @param operationName Name for logging purposes
    */
   async executeInTransaction<T>(
-    operation: () => Promise<ResultSpecification<T>>,
+    operation: () => Promise<Result<T>>,
     operationName: string,
-  ): Promise<ResultSpecification<T>> {
+  ): Promise<Result<T>> {
     this.logger.debug(`Starting transaction for: ${operationName}`);
 
     try {
@@ -32,7 +32,7 @@ export class TransactionService {
       return result;
     } catch (error) {
       this.logger.error(`Transaction error for ${operationName}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'TRANSACTION_ERROR',
         errorParam: { operation: operationName, error: String(error) },
       });
@@ -45,9 +45,9 @@ export class TransactionService {
    * @param transactionName Name for logging purposes
    */
   async executeMultipleInTransaction<T>(
-    operations: Array<() => Promise<ResultSpecification<T>>>,
+    operations: Array<() => Promise<Result<T>>>,
     transactionName: string,
-  ): Promise<ResultSpecification<T[]>> {
+  ): Promise<Result<T[]>> {
     this.logger.debug(`Starting batch transaction: ${transactionName}`);
 
     const results: T[] = [];
@@ -58,17 +58,17 @@ export class TransactionService {
 
         if (result.isFailure) {
           this.logger.warn(`Batch transaction failed at step ${index + 1} for ${transactionName}: ${result.errorKey}`);
-          return ResultSpecification.fail(result.error);
+          return Result.fail(result.error);
         }
 
         results.push(result.getValue);
       }
 
       this.logger.debug(`Batch transaction completed successfully: ${transactionName}`);
-      return ResultSpecification.ok(results);
+      return Result.ok(results);
     } catch (error) {
       this.logger.error(`Batch transaction error for ${transactionName}:`, error);
-      return ResultSpecification.fail({
+      return Result.fail({
         errorKey: 'BATCH_TRANSACTION_ERROR',
         errorParam: { transaction: transactionName, error: String(error) },
       });

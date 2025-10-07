@@ -1,6 +1,6 @@
 import { type IUserRepository, UserAggregate, UserEmail, UserName } from '@module/user/domain';
 import type { UseCase } from '@shared/app/use-case';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import type { ICreateUserDto } from '../dto';
 import { TRANSLATOR_KEY } from '@shared/translator';
 import type { DomainEventService } from '@shared/app/service/domain-event.service';
@@ -11,10 +11,10 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
     private readonly _domainEventService: DomainEventService,
   ) {}
 
-  async execute(input: ICreateUserDto): Promise<ResultSpecification<UserAggregate>> {
+  async execute(input: ICreateUserDto): Promise<Result<UserAggregate>> {
     const email = UserEmail.validate(input.email);
     if (email.isFailure) {
-      return ResultSpecification.fail<UserAggregate>({
+      return Result.fail<UserAggregate>({
         errorKey: email.errorKey,
         errorParam: email.errorParam,
       });
@@ -22,7 +22,7 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
 
     const name = UserName.validate(input.name);
     if (name.isFailure) {
-      return ResultSpecification.fail<UserAggregate>({
+      return Result.fail<UserAggregate>({
         errorKey: name.errorKey,
         errorParam: name.errorParam,
       });
@@ -30,11 +30,11 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
 
     const existingUserResult = await this._userRepository.findByEmail(email.getValue);
     if (existingUserResult.isFailure) {
-      return ResultSpecification.fail<UserAggregate>(existingUserResult.error);
+      return Result.fail<UserAggregate>(existingUserResult.error);
     }
 
     if (existingUserResult.getValue) {
-      return ResultSpecification.fail<UserAggregate>({
+      return Result.fail<UserAggregate>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__EMAIL_ALREADY_EXISTS,
       });
     }
@@ -45,7 +45,7 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
     });
 
     if (newUserResult.isFailure) {
-      return ResultSpecification.fail<UserAggregate>({
+      return Result.fail<UserAggregate>({
         errorKey: newUserResult.errorKey,
         errorParam: newUserResult.errorParam,
       });
@@ -58,7 +58,7 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
       const savedResult = await this._userRepository.save(user);
 
       if (savedResult.isFailure) {
-        return ResultSpecification.fail<UserAggregate>(savedResult.error);
+        return Result.fail<UserAggregate>(savedResult.error);
       }
 
       const userSaved = savedResult.getValue;
@@ -70,12 +70,12 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
       // Clear events after successful publishing
       userSaved.clearEvents();
 
-      return ResultSpecification.ok<UserAggregate>(userSaved);
+      return Result.ok<UserAggregate>(userSaved);
     } catch (error) {
       // If event publishing fails, the repository save will need to be rolled back
       // For now, we return a failure result
       // TODO: Implement proper transaction rollback with database transaction manager
-      return ResultSpecification.fail<UserAggregate>({
+      return Result.fail<UserAggregate>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__CREATION_FAILED,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });

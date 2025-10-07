@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import { TRANSLATOR_KEY } from '@shared/translator';
 
 interface IIdProps {
@@ -59,9 +59,9 @@ export class IdVO {
   /**
    * Validate external input (API, forms, etc.)
    */
-  public static validate(value: string): ResultSpecification<IdVO> {
+  public static validate(value: string): Result<IdVO> {
     if (!value || typeof value !== 'string' || value.trim().length === 0) {
-      return ResultSpecification.fail<IdVO>({
+      return Result.fail<IdVO>({
         errorKey: TRANSLATOR_KEY.ERROR__COMMON__INVALID_ID,
       });
     }
@@ -70,10 +70,10 @@ export class IdVO {
 
     // Accept MongoDB ObjectId or UUID
     if (Types.ObjectId.isValid(trimmed) || this.isValidUUID(trimmed)) {
-      return ResultSpecification.ok<IdVO>(new IdVO({ value: trimmed }));
+      return Result.ok<IdVO>(new IdVO({ value: trimmed }));
     }
 
-    return ResultSpecification.fail<IdVO>({
+    return Result.fail<IdVO>({
       errorKey: TRANSLATOR_KEY.ERROR__COMMON__INVALID_ID,
     });
   }

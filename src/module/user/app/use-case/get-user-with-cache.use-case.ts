@@ -3,7 +3,7 @@ import { UseCase } from '@shared/app';
 import type { IUserRepository } from '@module/user/domain/repo';
 import type { UserAggregate } from '@module/user/domain/aggregate';
 import { IdVO } from '@shared/domain/vo';
-import { ResultSpecification } from '@shared/domain/specification';
+import { Result } from '@shared/domain/specification';
 import type { ICache } from '@shared/domain/cache';
 import { USER_REPOSITORY } from '@module/user/user.token';
 import { CACHE_SERVICE } from '@infra/cache';
@@ -34,11 +34,11 @@ export class GetUserWithCacheUseCase implements UseCase<IGetUserWithCacheDto, Us
     private readonly cacheService: ICache,
   ) {}
 
-  async execute(input: IGetUserWithCacheDto): Promise<ResultSpecification<UserAggregate>> {
+  async execute(input: IGetUserWithCacheDto): Promise<Result<UserAggregate>> {
     // 1. Validate input
     const userIdResult = IdVO.validate(input.userId);
     if (userIdResult.isFailure) {
-      return ResultSpecification.fail(userIdResult.error);
+      return Result.fail(userIdResult.error);
     }
 
     const userId = userIdResult.getValue;
@@ -50,25 +50,25 @@ export class GetUserWithCacheUseCase implements UseCase<IGetUserWithCacheDto, Us
 
       if (cachedResult.isSuccess && cachedResult.getValue !== null) {
         // Cache hit - return cached data
-        return ResultSpecification.ok(cachedResult.getValue);
+        return Result.ok(cachedResult.getValue);
       }
     }
 
     // 3. Cache miss - get from database
     const userResult = await this.userRepository.findById(userId);
     if (userResult.isFailure) {
-      return ResultSpecification.fail(userResult.error);
+      return Result.fail(userResult.error);
     }
 
     const user = userResult.getValue;
     if (!user) {
-      return ResultSpecification.fail({ errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND });
+      return Result.fail({ errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND });
     }
 
     // 4. Store in cache for next request (30 minutes TTL)
     await this.cacheService.set(cacheKey, user, 1800);
 
-    return ResultSpecification.ok(user);
+    return Result.ok(user);
   }
 
   /**
