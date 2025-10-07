@@ -5,6 +5,8 @@ import { UserEmail, UserName } from '@module/user/domain/vo';
 
 import { Entity, Column, Repository, PrimaryGeneratedColumn } from 'typeorm';
 import { IdVO } from '@shared/domain/vo';
+import { ResultSpecification } from '@shared/domain/specification';
+import { TRANSLATOR_KEY } from '@shared/translator';
 
 @Entity('users')
 export class UserEntity {
@@ -31,63 +33,94 @@ export class UserTypeOrmRepository implements IUserRepository {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  async save(entity: UserAggregate): Promise<UserAggregate> {
-    // Check if this is a new user (placeholder ID) or existing user
-    if (entity.id.isPlaceholder()) {
-      // New user - let TypeORM generate ID
-      const userEntity = new UserEntity();
-      userEntity.email = entity.email.value;
-      userEntity.name = entity.name.value;
-      userEntity.createdAt = entity.createdAt;
-      userEntity.updatedAt = entity.updatedAt;
+  async save(entity: UserAggregate): Promise<ResultSpecification<UserAggregate>> {
+    try {
+      // Check if this is a new user (placeholder ID) or existing user
+      if (entity.id.isPlaceholder()) {
+        // New user - let TypeORM generate ID
+        const userEntity = new UserEntity();
+        userEntity.email = entity.email.value;
+        userEntity.name = entity.name.value;
+        userEntity.createdAt = entity.createdAt;
+        userEntity.updatedAt = entity.updatedAt;
 
-      const savedEntity = await this.userRepository.save(userEntity);
-      return this.toDomain(savedEntity);
-    } else {
-      // Existing user - update by ID
-      const existingEntity = await this.userRepository.findOne({
-        where: { id: entity.id.value },
+        const savedEntity = await this.userRepository.save(userEntity);
+        return ResultSpecification.ok(this.toDomain(savedEntity));
+      } else {
+        // Existing user - update by ID
+        const existingEntity = await this.userRepository.findOne({
+          where: { id: entity.id.value },
+        });
+
+        if (!existingEntity) {
+          return ResultSpecification.fail({
+            errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
+          });
+        }
+
+        existingEntity.email = entity.email.value;
+        existingEntity.name = entity.name.value;
+        existingEntity.updatedAt = new Date();
+
+        const updatedEntity = await this.userRepository.save(existingEntity);
+        return ResultSpecification.ok(this.toDomain(updatedEntity));
+      }
+    } catch (error) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__USER__CREATION_FAILED,
+        errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
+      });
+    }
+  }
+
+  async findById(id: IdVO): Promise<ResultSpecification<UserAggregate | null>> {
+    try {
+      const userEntity = await this.userRepository.findOne({
+        where: { id: id.value },
       });
 
-      if (!existingEntity) {
-        throw new Error('User not found for update');
+      if (!userEntity) {
+        return ResultSpecification.ok(null);
       }
 
-      existingEntity.email = entity.email.value;
-      existingEntity.name = entity.name.value;
-      existingEntity.updatedAt = new Date();
-
-      const updatedEntity = await this.userRepository.save(existingEntity);
-      return this.toDomain(updatedEntity);
+      return ResultSpecification.ok(this.toDomain(userEntity));
+    } catch (error) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
+        errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
+      });
     }
   }
 
-  async findById(id: IdVO): Promise<UserAggregate | null> {
-    const userEntity = await this.userRepository.findOne({
-      where: { id: id.value },
-    });
-
-    if (!userEntity) {
-      return null;
+  async delete(id: IdVO): Promise<ResultSpecification<void>> {
+    try {
+      await this.userRepository.delete({ id: id.value });
+      return ResultSpecification.ok(undefined);
+    } catch (error) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
+        errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
+      });
     }
-
-    return this.toDomain(userEntity);
   }
 
-  async delete(id: IdVO): Promise<void> {
-    await this.userRepository.delete({ id: id.value });
-  }
+  async findByEmail(email: UserEmail): Promise<ResultSpecification<UserAggregate | null>> {
+    try {
+      const userEntity = await this.userRepository.findOne({
+        where: { email: email.value },
+      });
 
-  async findByEmail(email: UserEmail): Promise<UserAggregate | null> {
-    const userEntity = await this.userRepository.findOne({
-      where: { email: email.value },
-    });
+      if (!userEntity) {
+        return ResultSpecification.ok(null);
+      }
 
-    if (!userEntity) {
-      return null;
+      return ResultSpecification.ok(this.toDomain(userEntity));
+    } catch (error) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND,
+        errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
+      });
     }
-
-    return this.toDomain(userEntity);
   }
 
   private toDomain(userEntity: UserEntity): UserAggregate {

@@ -55,7 +55,12 @@ export class GetUserWithCacheUseCase implements UseCase<IGetUserWithCacheDto, Us
     }
 
     // 3. Cache miss - get from database
-    const user = await this.userRepository.findById(userId);
+    const userResult = await this.userRepository.findById(userId);
+    if (userResult.isFailure) {
+      return ResultSpecification.fail(userResult.error);
+    }
+
+    const user = userResult.getValue;
     if (!user) {
       return ResultSpecification.fail({ errorKey: TRANSLATOR_KEY.ERROR__USER__NOT_FOUND });
     }

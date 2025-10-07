@@ -28,8 +28,12 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
       });
     }
 
-    const existingUser = await this._userRepository.findByEmail(email.getValue);
-    if (existingUser) {
+    const existingUserResult = await this._userRepository.findByEmail(email.getValue);
+    if (existingUserResult.isFailure) {
+      return ResultSpecification.fail<UserAggregate>(existingUserResult.error);
+    }
+
+    if (existingUserResult.getValue) {
       return ResultSpecification.fail<UserAggregate>({
         errorKey: TRANSLATOR_KEY.ERROR__USER__EMAIL_ALREADY_EXISTS,
       });
@@ -51,7 +55,13 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
 
     try {
       // Save aggregate to DB
-      const userSaved = await this._userRepository.save(user);
+      const savedResult = await this._userRepository.save(user);
+
+      if (savedResult.isFailure) {
+        return ResultSpecification.fail<UserAggregate>(savedResult.error);
+      }
+
+      const userSaved = savedResult.getValue;
 
       // Publish domain events (e.g., UserCreatedEvent)
       // If this fails, the exception will be caught and handled

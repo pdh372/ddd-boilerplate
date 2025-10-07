@@ -320,18 +320,53 @@ await this.retryWithBackoff(async () => {
 });
 ```
 
-### 10. **IMPROVEMENT - Repository Error Handling** 🟢
+### 10. **IMPROVEMENT - Repository Error Handling** ✅ FIXED (2025-10-07)
 
-**Location:** `src/infra/repo/typeorm/user.repo.ts:52`
+**Location:** All repository implementations
 
+**Issue:** Repositories throw errors instead of returning `ResultSpecification<T>`.
+
+**Fix Applied:**
 ```typescript
+// Old (THROWS ERRORS):
 if (!existingEntity) {
   throw new Error('User not found for update');
-  // ❌ Should return ResultSpecification
+}
+
+// Fixed (RETURNS RESULT):
+async save(entity: UserAggregate): Promise<ResultSpecification<UserAggregate>> {
+  try {
+    const savedEntity = await this.repository.save(entity);
+    return ResultSpecification.ok(this.toDomain(savedEntity));
+  } catch (error) {
+    return ResultSpecification.fail({
+      errorKey: TRANSLATOR_KEY.ERROR__USER__CREATION_FAILED,
+      errorParam: { reason: error.message }
+    });
+  }
 }
 ```
 
-**Fix:** Make repositories return `ResultSpecification<T>` consistently.
+**Changes Made:**
+1. ✅ Updated `IUserRepository` interface to return `ResultSpecification<T>`
+2. ✅ Updated `IOrderRepository` interface to return `ResultSpecification<T>`
+3. ✅ Updated TypeORM `UserTypeOrmRepository` (4 methods)
+4. ✅ Updated Mongoose `UserMongooseRepository` (4 methods)
+5. ✅ Updated Mongoose `OrderMongooseRepository` (4 methods)
+6. ✅ Updated all use cases to unwrap ResultSpecification (7 use cases):
+   - CreateUserUseCase
+   - GetUserUseCase
+   - GetUserWithCacheUseCase
+   - CreateOrderUseCase
+   - GetOrderUseCase
+   - AddOrderItemUseCase
+   - UpdateOrderItemQuantityUseCase
+
+**Benefits:**
+- ✅ Consistent error handling across all layers
+- ✅ No raw exceptions in repositories
+- ✅ Type-safe error propagation
+- ✅ Better error messages with context
 
 ---
 
@@ -365,7 +400,7 @@ if (!existingEntity) {
 ### Should Fix (Next Sprint):
 5. ⚠️ **Implement pagination in findByCustomerId** (MEDIUM)
 6. ⚠️ **Add input sanitization to DTOs** (MEDIUM)
-7. ⚠️ **Make repositories return ResultSpecification** (MEDIUM)
+7. ✅ **Make repositories return ResultSpecification** (MEDIUM) - FIXED 2025-10-07
 8. ⚠️ **Add retry logic to event store** (MEDIUM)
 
 ### Nice to Have:

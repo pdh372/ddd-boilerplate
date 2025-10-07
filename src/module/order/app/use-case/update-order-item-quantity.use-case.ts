@@ -28,7 +28,12 @@ export class UpdateOrderItemQuantityUseCase implements UseCase<IUpdateOrderItemQ
     }
 
     // Find order
-    const order = await this._orderRepository.findById(orderIdResult.getValue);
+    const orderResult = await this._orderRepository.findById(orderIdResult.getValue);
+    if (orderResult.isFailure) {
+      return ResultSpecification.fail<OrderAggregate>(orderResult.error);
+    }
+
+    const order = orderResult.getValue;
     if (!order) {
       return ResultSpecification.fail<OrderAggregate>({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,
@@ -46,7 +51,13 @@ export class UpdateOrderItemQuantityUseCase implements UseCase<IUpdateOrderItemQ
 
     try {
       // Save updated order
-      const savedOrder = await this._orderRepository.save(order);
+      const savedResult = await this._orderRepository.save(order);
+
+      if (savedResult.isFailure) {
+        return ResultSpecification.fail<OrderAggregate>(savedResult.error);
+      }
+
+      const savedOrder = savedResult.getValue;
 
       // Publish domain events (if any)
       // If this fails, the exception will be caught and handled

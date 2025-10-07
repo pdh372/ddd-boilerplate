@@ -27,7 +27,13 @@ export class CreateOrderUseCase implements UseCase<ICreateOrderDto, OrderAggrega
 
     try {
       // Save aggregate to DB
-      const orderSaved = await this._orderRepository.save(order);
+      const savedResult = await this._orderRepository.save(order);
+
+      if (savedResult.isFailure) {
+        return ResultSpecification.fail<OrderAggregate>(savedResult.error);
+      }
+
+      const orderSaved = savedResult.getValue;
 
       // Publish domain events (e.g., OrderCreatedEvent)
       // If this fails, the exception will be caught and handled

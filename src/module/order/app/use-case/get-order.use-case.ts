@@ -20,8 +20,13 @@ export class GetOrderUseCase implements UseCase<IGetOrderDto, OrderAggregate> {
       });
     }
 
-    const order = await this._orderRepository.findById(orderIdResult.getValue);
+    const orderResult = await this._orderRepository.findById(orderIdResult.getValue);
 
+    if (orderResult.isFailure) {
+      return ResultSpecification.fail<OrderAggregate>(orderResult.error);
+    }
+
+    const order = orderResult.getValue;
     if (!order) {
       return ResultSpecification.fail<OrderAggregate>({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,

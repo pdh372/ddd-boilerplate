@@ -5,6 +5,8 @@ import { type IOrderRepository, OrderAggregate, OrderStatus } from '@module/orde
 import { ProductName } from '@module/order/domain/vo';
 import { OrderItemEntity } from '@module/order/domain/entity';
 import { IdVO } from '@shared/domain/vo';
+import { ResultSpecification } from '@shared/domain/specification';
+import { TRANSLATOR_KEY } from '@shared/translator';
 
 @Schema()
 export class OrderItemDocument {
@@ -55,30 +57,13 @@ export class OrderMongooseRepository implements IOrderRepository {
     private readonly orderModel: Model<OrderDocument>,
   ) {}
 
-  async save(orderAggregate: OrderAggregate): Promise<OrderAggregate> {
-    // Check if this is a new order (placeholder ID) or existing order
-    if (orderAggregate.id.isPlaceholder()) {
-      // New order - let MongoDB generate ID
-      const orderDoc = {
-        customerId: orderAggregate.customerId.value,
-        status: orderAggregate.status,
-        items: orderAggregate.items.map((item) => ({
-          productId: item.productId.value, // Extract string from IdVO
-          productName: item.productName.value,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-        })),
-        createdAt: orderAggregate.createdAt,
-        updatedAt: orderAggregate.updatedAt,
-      };
-
-      const newDoc = await this.orderModel.create(orderDoc);
-      return this.toDomain(newDoc);
-    } else {
-      // Existing order - update
-      const updatedDoc = await this.orderModel.findByIdAndUpdate(
-        orderAggregate.id.value,
-        {
+  async save(orderAggregate: OrderAggregate): Promise<ResultSpecification<OrderAggregate>> {
+    try {
+      // Check if this is a new order (placeholder ID) or existing order
+      if (orderAggregate.id.isPlaceholder()) {
+        // New order - let MongoDB generate ID
+        const orderDoc = {
+          customerId: orderAggregate.customerId.value,
           status: orderAggregate.status,
           items: orderAggregate.items.map((item) => ({
             productId: item.productId.value, // Extract string from IdVO
@@ -86,36 +71,85 @@ export class OrderMongooseRepository implements IOrderRepository {
             quantity: item.quantity,
             unitPrice: item.unitPrice,
           })),
-          updatedAt: new Date(),
-        },
-        { new: true },
-      );
+          createdAt: orderAggregate.createdAt,
+          updatedAt: orderAggregate.updatedAt,
+        };
 
-      if (!updatedDoc) {
-        throw new Error('Order not found for update');
+        const newDoc = await this.orderModel.create(orderDoc);
+        return ResultSpecification.ok(this.toDomain(newDoc));
+      } else {
+        // Existing order - update
+        const updatedDoc = await this.orderModel.findByIdAndUpdate(
+          orderAggregate.id.value,
+          {
+            status: orderAggregate.status,
+            items: orderAggregate.items.map((item) => ({
+              productId: item.productId.value, // Extract string from IdVO
+              productName: item.productName.value,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+            })),
+            updatedAt: new Date(),
+          },
+          { new: true },
+        );
+
+        if (!updatedDoc) {
+          return ResultSpecification.fail({
+            errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,
+          });
+        }
+
+        return ResultSpecification.ok(this.toDomain(updatedDoc));
+      }
+    } catch (error) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__CREATION_FAILED,
+        errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
+      });
+    }
+  }
+
+  async findById(id: IdVO): Promise<ResultSpecification<OrderAggregate | null>> {
+    try {
+      const orderDoc = await this.orderModel.findById(id);
+
+      if (!orderDoc) {
+        return ResultSpecification.ok(null);
       }
 
-      return this.toDomain(updatedDoc);
+      return ResultSpecification.ok(this.toDomain(orderDoc));
+    } catch (error) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,
+        errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
+      });
     }
   }
 
-  async findById(id: IdVO): Promise<OrderAggregate | null> {
-    const orderDoc = await this.orderModel.findById(id);
-
-    if (!orderDoc) {
-      return null;
+  async findByCustomerId(customerId: IdVO): Promise<ResultSpecification<OrderAggregate[]>> {
+    try {
+      const orderDocs = await this.orderModel.find({ customerId });
+      const orders = orderDocs.map((doc) => this.toDomain(doc));
+      return ResultSpecification.ok(orders);
+    } catch (error) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,
+        errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
+      });
     }
-
-    return this.toDomain(orderDoc);
   }
 
-  async findByCustomerId(customerId: IdVO): Promise<OrderAggregate[]> {
-    const orderDocs = await this.orderModel.find({ customerId });
-    return orderDocs.map((doc) => this.toDomain(doc));
-  }
-
-  async delete(id: IdVO): Promise<void> {
-    await this.orderModel.findByIdAndDelete(id);
+  async delete(id: IdVO): Promise<ResultSpecification<void>> {
+    try {
+      await this.orderModel.findByIdAndDelete(id);
+      return ResultSpecification.ok(undefined);
+    } catch (error) {
+      return ResultSpecification.fail({
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,
+        errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
+      });
+    }
   }
 
   private toDomain(orderDoc: OrderDocument): OrderAggregate {
