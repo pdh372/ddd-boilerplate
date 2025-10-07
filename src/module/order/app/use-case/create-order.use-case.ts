@@ -24,14 +24,26 @@ export class CreateOrderUseCase implements UseCase<ICreateOrderDto, OrderAggrega
     }
 
     const order = newOrderResult.getValue;
-    const orderSaved = await this._orderRepository.save(order);
 
-    // Publish domain events (e.g., OrderCreatedEvent)
-    await this._domainEventService.publishEvents(orderSaved.domainEvents);
+    try {
+      // Save aggregate to DB
+      const orderSaved = await this._orderRepository.save(order);
 
-    // Clear events after publishing
-    orderSaved.clearEvents();
+      // Publish domain events (e.g., OrderCreatedEvent)
+      // If this fails, the exception will be caught and handled
+      await this._domainEventService.publishEvents(orderSaved.domainEvents);
 
-    return ResultSpecification.ok<OrderAggregate>(orderSaved);
+      // Clear events after successful publishing
+      orderSaved.clearEvents();
+
+      return ResultSpecification.ok<OrderAggregate>(orderSaved);
+    } catch (error) {
+      // If event publishing fails, return failure result
+      // Repository implementations should handle transaction rollback
+      return ResultSpecification.fail<OrderAggregate>({
+        errorKey: 'ERROR__ORDER__CREATION_FAILED',
+        errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
+      });
+    }
   }
 }

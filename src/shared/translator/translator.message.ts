@@ -25,6 +25,10 @@ export const TRANSLATOR_MESSAGE: Record<
     [LANGUAGE_TYPE.EN]: 'Failed to validate user eligibility',
     [LANGUAGE_TYPE.VI]: 'Không thể kiểm tra tính hợp lệ của người dùng',
   },
+  [TRANSLATOR_KEY.ERROR__USER__CREATION_FAILED]: {
+    [LANGUAGE_TYPE.EN]: 'User creation failed: {{reason}}',
+    [LANGUAGE_TYPE.VI]: 'Tạo người dùng thất bại: {{reason}}',
+  },
 
   // ORDER
   [TRANSLATOR_KEY.ERROR__ORDER__INVALID_QUANTITY]: {

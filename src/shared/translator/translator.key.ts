@@ -8,6 +8,7 @@ export const TRANSLATOR_KEY = {
   ERROR__USER__NOT_FOUND: 'error.user.not_found',
   ERROR__USER__INVALID_EMAIL: 'error.user.invalid_email',
   ERROR__USER__INVALID_NAME: 'error.user.invalid_name',
+  ERROR__USER__CREATION_FAILED: 'error.user.creation_failed',
 
   ERROR__ORDER__INVALID_QUANTITY: 'error.order.invalid_quantity',
   ERROR__ORDER__INVALID_UNIT_PRICE: 'error.order.invalid_unit_price',

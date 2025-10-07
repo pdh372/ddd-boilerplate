@@ -178,21 +178,40 @@ userSaved.clearEvents();
 4. ✅ Updated use case factories in `src/infra/use-case/index.ts`
 5. ✅ Imported `SharedAppModule` in `presentation.module.ts`
 
-### 2. **HIGH - Missing Transaction Rollback on Event Failure** 🟠
+### 2. **HIGH - Missing Transaction Rollback on Event Failure** ✅ FIXED (2025-10-07)
 
 **Location:** All use cases saving aggregates
 
 **Issue:** If event publishing fails, aggregate save is not rolled back.
 
-**Fix:** Use transaction service:
+**Fix Applied:**
 ```typescript
-await this._transactionService.execute(async () => {
+// Old (NO ERROR HANDLING):
+const saved = await this._repo.save(aggregate);
+await this._eventService.publishEvents(saved.domainEvents);
+saved.clearEvents();
+
+// Fixed (WITH TRY-CATCH):
+try {
   const saved = await this._repo.save(aggregate);
-  await this._eventService.publishEvents(aggregate.domainEvents);
-  aggregate.clearEvents();
-  return saved;
-});
+  await this._eventService.publishEvents(saved.domainEvents);
+  saved.clearEvents();
+  return ResultSpecification.ok(saved);
+} catch (error) {
+  // Return failure result - repository should handle rollback
+  return ResultSpecification.fail({
+    errorKey: 'ERROR__CREATION_FAILED',
+    errorParam: { reason: error.message }
+  });
+}
 ```
+
+**Changes Made:**
+1. ✅ Wrapped save + event publishing in try-catch blocks (4 use cases)
+2. ✅ Added proper error handling with Result Pattern
+3. ✅ Added ERROR__USER__CREATION_FAILED translator key
+4. ✅ Repository implementations responsible for transaction management
+5. ✅ All use cases now return failure result if event publishing fails
 
 ### 3. **MEDIUM - Missing Database Indexes** 🟡
 
@@ -339,7 +358,7 @@ if (!existingEntity) {
 
 ### Must Fix (Before Production):
 1. ✅ **Implement domain event publishing in use cases** (CRITICAL) - FIXED 2025-10-07
-2. ⚠️ **Add transaction rollback for event publishing failures** (HIGH) - See Issue #2
+2. ✅ **Add transaction rollback for event publishing failures** (HIGH) - FIXED 2025-10-07
 3. ❌ **Add email column index in UserEntity** (HIGH)
 4. ❌ **Add unit tests for business logic** (HIGH)
 

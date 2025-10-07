@@ -48,14 +48,27 @@ export class CreateUserUseCase implements UseCase<ICreateUserDto, UserAggregate>
     }
 
     const user = newUserResult.getValue;
-    const userSaved = await this._userRepository.save(user);
 
-    // Publish domain events (e.g., UserCreatedEvent)
-    await this._domainEventService.publishEvents(userSaved.domainEvents);
+    try {
+      // Save aggregate to DB
+      const userSaved = await this._userRepository.save(user);
 
-    // Clear events after publishing
-    userSaved.clearEvents();
+      // Publish domain events (e.g., UserCreatedEvent)
+      // If this fails, the exception will be caught and handled
+      await this._domainEventService.publishEvents(userSaved.domainEvents);
 
-    return ResultSpecification.ok<UserAggregate>(userSaved);
+      // Clear events after successful publishing
+      userSaved.clearEvents();
+
+      return ResultSpecification.ok<UserAggregate>(userSaved);
+    } catch (error) {
+      // If event publishing fails, the repository save will need to be rolled back
+      // For now, we return a failure result
+      // TODO: Implement proper transaction rollback with database transaction manager
+      return ResultSpecification.fail<UserAggregate>({
+        errorKey: TRANSLATOR_KEY.ERROR__USER__CREATION_FAILED,
+        errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
+      });
+    }
   }
 }

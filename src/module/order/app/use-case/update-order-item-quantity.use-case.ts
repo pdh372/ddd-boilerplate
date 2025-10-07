@@ -44,15 +44,25 @@ export class UpdateOrderItemQuantityUseCase implements UseCase<IUpdateOrderItemQ
       });
     }
 
-    // Save updated order
-    const savedOrder = await this._orderRepository.save(order);
+    try {
+      // Save updated order
+      const savedOrder = await this._orderRepository.save(order);
 
-    // Publish domain events (if any)
-    await this._domainEventService.publishEvents(savedOrder.domainEvents);
+      // Publish domain events (if any)
+      // If this fails, the exception will be caught and handled
+      await this._domainEventService.publishEvents(savedOrder.domainEvents);
 
-    // Clear events after publishing
-    savedOrder.clearEvents();
+      // Clear events after successful publishing
+      savedOrder.clearEvents();
 
-    return ResultSpecification.ok<OrderAggregate>(savedOrder);
+      return ResultSpecification.ok<OrderAggregate>(savedOrder);
+    } catch (error) {
+      // If event publishing fails, return failure result
+      // Repository implementations should handle transaction rollback
+      return ResultSpecification.fail<OrderAggregate>({
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__CREATION_FAILED,
+        errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
+      });
+    }
   }
 }
