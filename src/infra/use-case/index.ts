@@ -8,6 +8,7 @@ import {
   GetOrderUseCase,
   UpdateOrderItemQuantityUseCase,
   AddOrderItemUseCase,
+  ExportCustomerOrdersUseCase,
 } from '@module/order/app/use-case';
 import { CACHE_SERVICE } from '../cache';
 import type { ICache } from '@shared/domain/cache';
@@ -58,6 +59,13 @@ export const USE_CASE = {
       inject: [ORDER_REPOSITORY, DOMAIN_EVENT_SERVICE],
       useFactory: (orderRepo: IOrderRepository, eventService: DomainEventService) => {
         return new AddOrderItemUseCase(orderRepo, eventService);
+      },
+    },
+    EXPORT_CUSTOMER_ORDERS: {
+      provide: ExportCustomerOrdersUseCase,
+      inject: [ORDER_REPOSITORY],
+      useFactory: (orderRepo: IOrderRepository) => {
+        return new ExportCustomerOrdersUseCase(orderRepo);
       },
     },
   },

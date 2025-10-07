@@ -10,6 +10,7 @@ import { USE_CASE } from '@infra/use-case';
     USE_CASE.ORDER.GET_ORDER,
     USE_CASE.ORDER.UPDATE_ORDER_ITEM_QUANTITY,
     USE_CASE.ORDER.ADD_ORDER_ITEM,
+    USE_CASE.ORDER.EXPORT_CUSTOMER_ORDERS,
   ],
 })
 export class OrderModule {}

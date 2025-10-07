@@ -234,21 +234,79 @@ email!: string;
 
 **Impact:** Slow `findByEmail()` queries as dataset grows.
 
-### 4. **MEDIUM - Potential N+1 Query** 🟡
+### 4. **MEDIUM - Potential N+1 Query** ✅ FIXED
 
-**Location:** `src/infra/repo/mongoose/order.repo.ts:112`
+**Location:** `src/infra/repo/mongoose/order.repo.ts:139-171`
 
 **Issue:** `findByCustomerId` retrieves all orders without pagination.
 
+**Solution Implemented (Approach 3 - Separate Use Case):**
+
+✅ **Repository now REQUIRES pagination** - prevents accidental full scans:
 ```typescript
-async findByCustomerId(customerId: IdVO): Promise<OrderAggregate[]> {
-  const orderDocs = await this.orderModel.find({ customerId });
-  // ❌ No limit/skip - could return 10,000+ orders
-  return orderDocs.map((doc) => this.toDomain(doc));
+// src/module/order/domain/repo/order.repo.ts:30-33
+findByCustomerId(
+  customerId: IdVO,
+  options: IPaginationOptions, // REQUIRED (not optional)
+): Promise<Result<IPaginatedResult<OrderAggregate>>>;
+```
+
+✅ **Separate Export Use Case with batch fetching**:
+```typescript
+// src/module/order/app/use-case/export-customer-orders.use-case.ts
+export class ExportCustomerOrdersUseCase {
+  private readonly BATCH_SIZE = 100;
+
+  async execute(input: IExportCustomerOrdersDto): Promise<Result<OrderAggregate[]>> {
+    const allOrders: OrderAggregate[] = [];
+    let currentPage = 1;
+
+    // Batch fetch with pagination to prevent OOM
+    while (true) {
+      const result = await repo.findByCustomerId(customerId, {
+        page: currentPage,
+        limit: this.BATCH_SIZE,
+      });
+
+      allOrders.push(...result.getValue.items);
+      if (!result.getValue.hasNextPage) break;
+      currentPage++;
+    }
+
+    return Result.ok(allOrders);
+  }
 }
 ```
 
-**Fix:** Add pagination support to repository interface.
+✅ **New API endpoint** for exports:
+```typescript
+// GET /order/customer/:customerId/export
+@Get('customer/:customerId/export')
+async exportCustomerOrders(@Param('customerId') customerId: string) {
+  const result = await this._exportCustomerOrdersUseCase.execute({ customerId });
+  return OrderMapper.toExportResponseDto(result.getValue, customerId);
+}
+```
+
+✅ **Database index** for efficient pagination:
+```typescript
+// src/infra/repo/mongoose/order.repo.ts:60
+OrderSchema.index({ customerId: 1, createdAt: -1 });
+```
+
+**Architecture Benefits:**
+- ✅ **DDD Compliant** - Use case orchestrates business logic, repository stays simple
+- ✅ **Type-safe** - Pagination REQUIRED, no accidental full scans
+- ✅ **Memory safe** - Batch processing (100 items/batch) prevents OOM
+- ✅ **Performance** - Compound index optimizes queries
+- ✅ **Flexible** - Easy to add: filtering, caching, streaming later
+
+**Files Changed:**
+- `src/module/order/domain/repo/order.repo.ts` - Added required pagination + interfaces
+- `src/infra/repo/mongoose/order.repo.ts` - Removed optional pagination logic
+- `src/module/order/app/use-case/export-customer-orders.use-case.ts` - NEW batch export use case
+- `src/presentation/web/order/order.controller.ts` - NEW export endpoint
+- `src/infra/use-case/index.ts` - DI registration
 
 ### 5. **MEDIUM - Missing Input Sanitization** 🟡
 

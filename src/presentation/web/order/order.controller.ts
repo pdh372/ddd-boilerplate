@@ -4,9 +4,10 @@ import {
   GetOrderUseCase,
   UpdateOrderItemQuantityUseCase,
   AddOrderItemUseCase,
+  ExportCustomerOrdersUseCase,
 } from '@module/order/app/use-case';
 import { AcceptLanguage, IAcceptLanguageContext } from '@shared/decorator';
-import { CreateOrderDto, AddOrderItemDto, OrderResponseDto } from './dto';
+import { CreateOrderDto, AddOrderItemDto, OrderResponseDto, ExportOrdersResponseDto } from './dto';
 import { ERROR_STATUS_CODE } from '@shared/translator';
 import { OrderMapper } from './mapper';
 
@@ -17,6 +18,7 @@ export class OrderController {
     private readonly _getOrderUseCase: GetOrderUseCase,
     private readonly _updateOrderItemQuantityUseCase: UpdateOrderItemQuantityUseCase,
     private readonly _addOrderItemUseCase: AddOrderItemUseCase,
+    private readonly _exportCustomerOrdersUseCase: ExportCustomerOrdersUseCase,
   ) {}
 
   @Post()
@@ -90,5 +92,20 @@ export class OrderController {
     }
 
     return OrderMapper.toResponseDto(result.getValue);
+  }
+
+  @Get('customer/:customerId/export')
+  async exportCustomerOrders(
+    @Param('customerId') customerId: string,
+    @AcceptLanguage() acceptLanguage: IAcceptLanguageContext,
+  ): Promise<ExportOrdersResponseDto> {
+    const result = await this._exportCustomerOrdersUseCase.execute({ customerId });
+
+    if (result.isFailure) {
+      const statusCode = ERROR_STATUS_CODE[result.errorKey] ?? HttpStatus.INTERNAL_SERVER_ERROR;
+      throw new HttpException(acceptLanguage({ key: result.errorKey, param: result.errorParam }), statusCode);
+    }
+
+    return OrderMapper.toExportResponseDto(result.getValue, customerId);
   }
 }

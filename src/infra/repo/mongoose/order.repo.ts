@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Model } from 'mongoose';
-import { type IOrderRepository, OrderAggregate, OrderStatus } from '@module/order/domain';
+import {
+  type IOrderRepository,
+  type IPaginationOptions,
+  type IPaginatedResult,
+  OrderAggregate,
+  OrderStatus,
+} from '@module/order/domain';
 import { ProductName } from '@module/order/domain/vo';
 import { OrderItemEntity } from '@module/order/domain/entity';
 import { IdVO } from '@shared/domain/vo';
@@ -49,6 +55,9 @@ export class OrderDocument extends Document {
 }
 
 export const OrderSchema = SchemaFactory.createForClass(OrderDocument);
+
+// Index for efficient pagination by customerId
+OrderSchema.index({ customerId: 1, createdAt: -1 });
 
 @Injectable()
 export class OrderMongooseRepository implements IOrderRepository {
@@ -127,11 +136,32 @@ export class OrderMongooseRepository implements IOrderRepository {
     }
   }
 
-  async findByCustomerId(customerId: IdVO): Promise<Result<OrderAggregate[]>> {
+  async findByCustomerId(
+    customerId: IdVO,
+    options: IPaginationOptions,
+  ): Promise<Result<IPaginatedResult<OrderAggregate>>> {
     try {
-      const orderDocs = await this.orderModel.find({ customerId });
+      const page = options.page;
+      const limit = options.limit;
+      const skip = (page - 1) * limit;
+
+      const [orderDocs, total] = await Promise.all([
+        this.orderModel.find({ customerId }).skip(skip).limit(limit).sort({ createdAt: -1 }),
+        this.orderModel.countDocuments({ customerId }),
+      ]);
+
       const orders = orderDocs.map((doc) => this.toDomain(doc));
-      return Result.ok(orders);
+      const totalPages = Math.ceil(total / limit);
+
+      return Result.ok({
+        items: orders,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      });
     } catch (error) {
       return Result.fail({
         errorKey: TRANSLATOR_KEY.ERROR__ORDER__NOT_FOUND,

@@ -1,5 +1,5 @@
 import type { OrderAggregate } from '@module/order/domain';
-import type { OrderResponseDto } from '../dto';
+import type { OrderResponseDto, ExportOrdersResponseDto } from '../dto';
 
 /**
  * Mapper utility for converting domain objects to presentation DTOs
@@ -28,6 +28,21 @@ export class OrderMapper {
       })),
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
+    };
+  }
+
+  /**
+   * Converts array of OrderAggregate to ExportOrdersResponseDto
+   * @param orders - Array of OrderAggregate from domain
+   * @param customerId - Customer ID for the export
+   * @returns ExportOrdersResponseDto for presentation layer
+   */
+  public static toExportResponseDto(orders: OrderAggregate[], customerId: string): ExportOrdersResponseDto {
+    return {
+      orders: orders.map((order) => this.toResponseDto(order)),
+      total: orders.length,
+      exportedAt: new Date(),
+      customerId,
     };
   }
 }
