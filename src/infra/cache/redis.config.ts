@@ -1,5 +1,6 @@
 import type { RedisOptions } from 'ioredis';
 import type { ConfigService } from '@nestjs/config';
+import { REDIS, CACHE_TTL } from '@shared/config/constants.config';
 
 /**
  * Redis Configuration Factory
@@ -14,18 +15,18 @@ export class RedisConfig {
       port: +configService.get<number>('REDIS_PORT', 6379),
       db: +configService.get<number>('REDIS_DB', 0),
       retryStrategy: (times: number) => {
-        // Exponential backoff: 50ms, 100ms, 200ms, ..., max 3000ms
-        const delay = Math.min(times * 50, 3000);
+        // Exponential backoff with configurable delays
+        const delay = Math.min(times * REDIS.RETRY_BASE_DELAY, REDIS.RETRY_MAX_DELAY);
         return delay;
       },
-      maxRetriesPerRequest: 3,
+      maxRetriesPerRequest: REDIS.MAX_RETRIES_PER_REQUEST,
       enableReadyCheck: true,
       enableOfflineQueue: true,
       lazyConnect: false,
       // Connection timeout
-      connectTimeout: 10000,
+      connectTimeout: REDIS.CONNECTION_TIMEOUT,
       // Keep alive
-      keepAlive: 30000,
+      keepAlive: REDIS.KEEP_ALIVE_INTERVAL,
       // Auto-reconnect
       autoResubscribe: true,
       autoResendUnfulfilledCommands: true,
@@ -40,11 +41,11 @@ export class RedisConfig {
   }
 
   /**
-   * Get default TTL from config
+   * Get default TTL from config or use constant default
    */
   static getDefaultTTL(configService: ConfigService<Record<string, unknown>, false>): number {
     const ttl = configService.get<number>('REDIS_TTL');
-    return ttl ?? 3600;
+    return ttl ?? CACHE_TTL.DEFAULT;
   }
 
   /**

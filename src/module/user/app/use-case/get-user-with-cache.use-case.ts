@@ -8,6 +8,7 @@ import type { ICache } from '@shared/domain/cache';
 import { USER_REPOSITORY } from '@module/user/user.token';
 import { CACHE_SERVICE } from '@infra/cache';
 import { TRANSLATOR_KEY } from '@shared/translator';
+import { CACHE_TTL } from '@shared/config/constants.config';
 
 interface IGetUserWithCacheDto {
   userId: string;
@@ -66,7 +67,7 @@ export class GetUserWithCacheUseCase implements UseCase<IGetUserWithCacheDto, Us
     }
 
     // 4. Store in cache for next request (30 minutes TTL)
-    await this.cacheService.set(cacheKey, user, 1800);
+    await this.cacheService.set(cacheKey, user, CACHE_TTL.USER);
 
     return Result.ok(user);
   }

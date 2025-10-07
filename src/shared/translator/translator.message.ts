@@ -71,6 +71,10 @@ export const TRANSLATOR_MESSAGE: Record<
     [LANGUAGE_TYPE.EN]: 'Failed to create order items',
     [LANGUAGE_TYPE.VI]: 'Không thể tạo sản phẩm trong đơn hàng',
   },
+  [TRANSLATOR_KEY.ERROR__ORDER__EXPORT_FAILED]: {
+    [LANGUAGE_TYPE.EN]: 'Failed to export orders: {{reason}}',
+    [LANGUAGE_TYPE.VI]: 'Không thể xuất đơn hàng: {{reason}}',
+  },
 
   // COMMON
   [TRANSLATOR_KEY.ERROR__COMMON__INVALID_ID]: {

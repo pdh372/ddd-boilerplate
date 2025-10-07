@@ -20,6 +20,7 @@ export const TRANSLATOR_KEY = {
   ERROR__ORDER__INVALID_PRODUCT_NAME: 'error.order.invalid_product_name',
   ERROR__ORDER__CREATION_FAILED: 'error.order.creation_failed',
   ERROR__ORDER__ITEMS_CREATION_FAILED: 'error.order.items_creation_failed',
+  ERROR__ORDER__EXPORT_FAILED: 'error.order.export_failed',
 
   ERROR__COMMON__INVALID_ID: 'error.common.invalid_id',
 

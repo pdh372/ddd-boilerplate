@@ -2,6 +2,8 @@ import { type IOrderRepository, type OrderAggregate } from '@module/order/domain
 import type { UseCase } from '@shared/app/use-case';
 import { Result } from '@shared/domain/specification';
 import { IdVO } from '@shared/domain/vo';
+import { PAGINATION } from '@shared/config/constants.config';
+import { TRANSLATOR_KEY } from '@shared/translator';
 
 export interface IExportCustomerOrdersDto {
   customerId: string;
@@ -9,10 +11,10 @@ export interface IExportCustomerOrdersDto {
 
 /**
  * Export all orders for a customer using batch fetching strategy
- * Prevents N+1 queries and OOM by fetching in pages of 100
+ * Prevents N+1 queries and OOM by fetching in configurable batch size
  */
 export class ExportCustomerOrdersUseCase implements UseCase<IExportCustomerOrdersDto, OrderAggregate[]> {
-  private readonly BATCH_SIZE = 100;
+  private readonly BATCH_SIZE = PAGINATION.EXPORT_BATCH_SIZE;
 
   constructor(private readonly _orderRepository: IOrderRepository) {}
 
@@ -56,7 +58,7 @@ export class ExportCustomerOrdersUseCase implements UseCase<IExportCustomerOrder
       return Result.ok(allOrders);
     } catch (error) {
       return Result.fail<OrderAggregate[]>({
-        errorKey: 'ERROR__ORDER__EXPORT_FAILED',
+        errorKey: TRANSLATOR_KEY.ERROR__ORDER__EXPORT_FAILED,
         errorParam: { reason: error instanceof Error ? error.message : 'Unknown error' },
       });
     }
