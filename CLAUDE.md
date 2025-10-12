@@ -578,3 +578,207 @@ Error keys defined in `src/shared/translator/translator.key.ts` Status codes in 
 - **Audit Trail**: Full event history with metadata and correlation IDs
 - **Concurrency**: Optimistic locking mechanisms with transaction isolation
 - **Production Readiness**: Connection pooling, error recovery, structured logging
+
+### Centralized Constants Configuration
+
+**No magic numbers - all configuration centralized:**
+
+Location: `src/shared/config/constants.config.ts`
+
+```typescript
+export const PAGINATION = {
+  DEFAULT_LIMIT: 10,
+  MAX_LIMIT: 100,
+  EXPORT_BATCH_SIZE: 100,  // Batch size for export operations (prevents OOM)
+} as const;
+
+export const CACHE_TTL = {
+  DEFAULT: 3600,   // 1 hour
+  USER: 1800,      // 30 minutes
+  ORDER: 900,      // 15 minutes
+  SHORT: 300,      // 5 minutes
+  LONG: 86400,     // 24 hours
+} as const;
+
+export const REDIS = {
+  MAX_RETRIES_PER_REQUEST: 3,
+  RETRY_BASE_DELAY: 50,
+  RETRY_MAX_DELAY: 3000,
+  CONNECTION_TIMEOUT: 10000,
+  KEEP_ALIVE_INTERVAL: 30000,
+} as const;
+```
+
+**Usage:**
+```typescript
+import { PAGINATION, CACHE_TTL } from '@shared/config/constants.config';
+
+class ExportUseCase {
+  private readonly BATCH_SIZE = PAGINATION.EXPORT_BATCH_SIZE;
+}
+
+await cache.set(key, user, CACHE_TTL.USER);
+```
+
+### Export Use Case Pattern (Batch Fetching)
+
+**Approach 3: Separate Use Case for Large Datasets**
+
+**Problem:** N+1 query when fetching all customer orders for export
+
+**Solution:** Repository requires pagination, Use Case orchestrates batch fetching
+
+**Repository Interface:**
+```typescript
+// src/module/order/domain/repo/order.repo.ts
+interface IOrderRepository {
+  findByCustomerId(
+    customerId: IdVO,
+    options: IPaginationOptions, // REQUIRED - prevents accidental full scans
+  ): Promise<Result<IPaginatedResult<OrderAggregate>>>;
+}
+```
+
+**Export Use Case:**
+```typescript
+// src/module/order/app/use-case/export-customer-orders.use-case.ts
+export class ExportCustomerOrdersUseCase {
+  private readonly BATCH_SIZE = PAGINATION.EXPORT_BATCH_SIZE;
+
+  async execute(input: IExportCustomerOrdersDto): Promise<Result<OrderAggregate[]>> {
+    const allOrders: OrderAggregate[] = [];
+    let currentPage = 1;
+
+    while (true) {
+      const result = await repo.findByCustomerId(customerId, {
+        page: currentPage,
+        limit: this.BATCH_SIZE,
+      });
+
+      allOrders.push(...result.getValue.items);
+      if (!result.getValue.hasNextPage) break;
+      currentPage++;
+    }
+
+    return Result.ok(allOrders);
+  }
+}
+```
+
+**Benefits:**
+- ✅ Repository stays simple (single responsibility)
+- ✅ Memory safe (batch processing prevents OOM)
+- ✅ Type-safe (pagination REQUIRED)
+- ✅ Use case owns orchestration logic
+
+**API Endpoint:**
+```typescript
+@Get('customer/:customerId/export')
+async exportCustomerOrders(@Param('customerId') customerId: string) {
+  const result = await exportUseCase.execute({ customerId });
+  return OrderMapper.toExportResponseDto(result.getValue, customerId);
+}
+```
+
+### Input Sanitization Pattern
+
+**DTOs handle format validation, Domain handles business rules**
+
+**Transform Helpers (Reusable Sanitization):**
+
+Location: `src/shared/decorator/transform.helper.ts`
+
+```typescript
+export function trimAndLowercase(value: unknown): string {
+  if (typeof value !== 'string') return String(value);
+  return value.trim().toLowerCase();
+}
+
+export function trimString(value: unknown): string {
+  if (typeof value !== 'string') return String(value);
+  return value.trim();
+}
+```
+
+**DTO with Sanitization:**
+```typescript
+// src/presentation/web/user/dto/create-user.dto.ts
+import { trimAndLowercase, trimString } from '@shared/decorator/transform.helper';
+
+export class CreateUserDto {
+  @IsEmail()
+  @IsNotEmpty()
+  @Transform(({ value }) => trimAndLowercase(value))
+  email!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(100)
+  @Transform(({ value }) => trimString(value))
+  name!: string;
+}
+```
+
+**ValidationPipe Configuration:**
+```typescript
+// src/main.ts
+app.useGlobalPipes(
+  new ValidationPipe({
+    transform: true,              // Enable DTO transformation
+    whitelist: true,              // Strip unknown properties
+    forbidNonWhitelisted: true,   // Throw error on unknown properties
+    transformOptions: {
+      enableImplicitConversion: true, // Allow @Transform decorators
+    },
+  }),
+);
+```
+
+**Validation Flow:**
+```
+1. Request → DTO validation (format + sanitization)
+   - Trim whitespace
+   - Normalize case
+   - Type checking
+   ↓
+2. Use Case → VO validation (business rules + i18n)
+   - Domain validation
+   - Multilingual errors
+   ↓
+3. Response → Translated error message
+```
+
+**Benefits:**
+- ✅ ESLint compliant (no inline ternary)
+- ✅ DRY (reusable helpers)
+- ✅ Security (prevents injection, whitespace exploits)
+- ✅ i18n support (domain layer handles translations)
+- ✅ Separation of concerns (DTOs = format, VOs = business rules)
+
+## Git Hooks (Automated Quality)
+
+**Husky + lint-staged for automatic code quality:**
+
+```bash
+# Pre-commit hook runs automatically
+pnpm exec lint-staged
+```
+
+**Configuration:**
+```json
+{
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
+```
+
+**Auto-formatting on commit:**
+- ✅ ESLint auto-fix on staged files
+- ✅ Prettier formatting
+- ✅ Only formats changed files (fast)
+- ✅ Commit fails if lint errors remain

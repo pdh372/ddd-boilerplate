@@ -13,11 +13,11 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidNonWhitelisted: true,
+      transform: true, // Enable DTO transformation
+      whitelist: true, // Strip properties not in DTO
+      forbidNonWhitelisted: true, // Throw error on unknown properties
       transformOptions: {
-        enableImplicitConversion: false,
+        enableImplicitConversion: true, // Allow @Transform decorators to work
       },
     }),
   );
