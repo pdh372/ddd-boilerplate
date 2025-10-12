@@ -72,3 +72,22 @@ export const DATABASE = {
   /** Query timeout (ms) */
   QUERY_TIMEOUT: 30000,
 } as const;
+
+/**
+ * Retry & Resilience Constants
+ * Used for exponential backoff retry logic and circuit breaker pattern
+ */
+export const RETRY = {
+  /** Maximum retry attempts for transient failures */
+  MAX_ATTEMPTS: 3,
+  /** Base delay for exponential backoff (ms) - doubles each retry */
+  BASE_DELAY: 100,
+  /** Maximum delay between retries (ms) - caps exponential growth */
+  MAX_DELAY: 3000,
+  /** Circuit breaker: consecutive failures to open circuit */
+  CIRCUIT_FAILURE_THRESHOLD: 5,
+  /** Circuit breaker: consecutive successes to close circuit */
+  CIRCUIT_SUCCESS_THRESHOLD: 2,
+  /** Circuit breaker: time to wait before testing recovery (ms) - 1 minute */
+  CIRCUIT_TIMEOUT: 60000,
+} as const;

@@ -5,6 +5,8 @@ import type { IEventStore, StoredDomainEvent } from '@shared/domain/event-store'
 import type { EventRoot } from '@shared/domain/event';
 import { Result } from '@shared/domain/specification';
 import { v4 as uuidv4 } from 'uuid';
+import { retryWithBackoff, CircuitBreaker } from '@shared/utils/retry.util';
+import { RETRY } from '@shared/config/constants.config';
 import { EventStoreEntity } from './entity/event-store.entity';
 import { SnapshotEntity } from './entity/snapshot.entity';
 
@@ -18,10 +20,13 @@ import { SnapshotEntity } from './entity/snapshot.entity';
  * - Global event ordering
  * - Connection pooling and error recovery
  * - Production monitoring hooks
+ * - Exponential backoff retry for transient failures
+ * - Circuit breaker to prevent retry storms
  */
 @Injectable()
 export class PostgreSqlEventStore implements IEventStore {
   private readonly logger = new Logger(PostgreSqlEventStore.name);
+  private readonly circuitBreaker: CircuitBreaker;
 
   constructor(
     @InjectRepository(EventStoreEntity)
@@ -29,9 +34,57 @@ export class PostgreSqlEventStore implements IEventStore {
     @InjectRepository(SnapshotEntity)
     private readonly snapshotRepository: Repository<SnapshotEntity>,
     private readonly dataSource: DataSource,
-  ) {}
+  ) {
+    // Initialize circuit breaker for database operations
+    this.circuitBreaker = new CircuitBreaker({
+      failureThreshold: RETRY.CIRCUIT_FAILURE_THRESHOLD,
+      successThreshold: RETRY.CIRCUIT_SUCCESS_THRESHOLD,
+      timeout: RETRY.CIRCUIT_TIMEOUT,
+      name: 'PostgreSQL-EventStore',
+    });
+  }
 
   async appendEvents(
+    aggregateId: string,
+    aggregateType: string,
+    events: EventRoot[],
+    expectedVersion?: number,
+  ): Promise<Result<void>> {
+    // Wrap entire operation with circuit breaker + retry logic
+    try {
+      return await this.circuitBreaker.execute(async () => {
+        return await retryWithBackoff(
+          async () => {
+            return await this.appendEventsInternal(aggregateId, aggregateType, events, expectedVersion);
+          },
+          {
+            maxRetries: RETRY.MAX_ATTEMPTS,
+            baseDelay: RETRY.BASE_DELAY,
+            maxDelay: RETRY.MAX_DELAY,
+            shouldRetry: (error) => this.isTransientError(error),
+            logger: this.logger,
+            operationName: 'appendEvents',
+          },
+        );
+      });
+    } catch (error) {
+      // If circuit is open or all retries exhausted, return failure
+      this.logger.error(`Failed to append events after retries for aggregate ${aggregateId}:`, error);
+      return Result.fail({
+        errorKey: 'EVENT_STORE_APPEND_ERROR',
+        errorParam: {
+          aggregateId,
+          error: this.extractErrorMessage(error),
+        },
+      });
+    }
+  }
+
+  /**
+   * Internal implementation of appendEvents with transaction handling
+   * Separated to allow retry logic to wrap transaction boundary
+   */
+  private async appendEventsInternal(
     aggregateId: string,
     aggregateType: string,
     events: EventRoot[],
@@ -82,7 +135,7 @@ export class PostgreSqlEventStore implements IEventStore {
         return entity;
       });
 
-      // Batch insert events
+      // Batch insert events with retry protection
       await queryRunner.manager.save(EventStoreEntity, eventEntities);
       await queryRunner.commitTransaction();
 
@@ -100,24 +153,13 @@ export class PostgreSqlEventStore implements IEventStore {
       return Result.ok();
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.logger.error(`Failed to append events for aggregate ${aggregateId}:`, error);
-
-      return Result.fail({
-        errorKey: 'EVENT_STORE_APPEND_ERROR',
-        errorParam: {
-          aggregateId,
-          error: this.extractErrorMessage(error),
-        },
-      });
+      throw error; // Re-throw to allow retry logic to handle
     } finally {
       await queryRunner.release();
     }
   }
 
-  async getEventsForAggregate(
-    aggregateId: string,
-    fromVersion?: number,
-  ): Promise<Result<StoredDomainEvent[]>> {
+  async getEventsForAggregate(aggregateId: string, fromVersion?: number): Promise<Result<StoredDomainEvent[]>> {
     try {
       const queryBuilder = this.eventRepository
         .createQueryBuilder('event')
@@ -210,9 +252,7 @@ export class PostgreSqlEventStore implements IEventStore {
     }
   }
 
-  async getEventsForAggregates(
-    aggregateIds: string[],
-  ): Promise<Result<Record<string, StoredDomainEvent[]>>> {
+  async getEventsForAggregates(aggregateIds: string[]): Promise<Result<Record<string, StoredDomainEvent[]>>> {
     try {
       const events = await this.eventRepository
         .createQueryBuilder('event')
@@ -251,24 +291,26 @@ export class PostgreSqlEventStore implements IEventStore {
     snapshot: Record<string, unknown>,
     version: number,
   ): Promise<Result<void>> {
+    // Wrap with circuit breaker + retry logic
     try {
-      const snapshotEntity = new SnapshotEntity();
-      snapshotEntity.aggregateId = aggregateId;
-      snapshotEntity.aggregateType = aggregateType;
-      snapshotEntity.version = version;
-      snapshotEntity.snapshotData = snapshot;
-      snapshotEntity.metadata = {
-        createdBy: 'system',
-        snapshotReason: 'performance_optimization',
-      };
-
-      await this.snapshotRepository.save(snapshotEntity);
-
-      this.logger.debug(`Saved snapshot for aggregate ${aggregateId} at version ${version}`);
-
-      return Result.ok();
+      return await this.circuitBreaker.execute(async () => {
+        return await retryWithBackoff(
+          async () => {
+            return await this.saveSnapshotInternal(aggregateId, aggregateType, snapshot, version);
+          },
+          {
+            maxRetries: RETRY.MAX_ATTEMPTS,
+            baseDelay: RETRY.BASE_DELAY,
+            maxDelay: RETRY.MAX_DELAY,
+            shouldRetry: (error) => this.isTransientError(error),
+            logger: this.logger,
+            operationName: 'saveSnapshot',
+          },
+        );
+      });
     } catch (error) {
-      this.logger.error(`Failed to save snapshot for aggregate ${aggregateId}:`, error);
+      // If circuit is open or all retries exhausted, return failure
+      this.logger.error(`Failed to save snapshot after retries for aggregate ${aggregateId}:`, error);
       return Result.fail({
         errorKey: 'EVENT_STORE_SNAPSHOT_ERROR',
         errorParam: {
@@ -278,6 +320,33 @@ export class PostgreSqlEventStore implements IEventStore {
         },
       });
     }
+  }
+
+  /**
+   * Internal implementation of saveSnapshot
+   * Separated to allow retry logic to wrap the operation
+   */
+  private async saveSnapshotInternal(
+    aggregateId: string,
+    aggregateType: string,
+    snapshot: Record<string, unknown>,
+    version: number,
+  ): Promise<Result<void>> {
+    const snapshotEntity = new SnapshotEntity();
+    snapshotEntity.aggregateId = aggregateId;
+    snapshotEntity.aggregateType = aggregateType;
+    snapshotEntity.version = version;
+    snapshotEntity.snapshotData = snapshot;
+    snapshotEntity.metadata = {
+      createdBy: 'system',
+      snapshotReason: 'performance_optimization',
+    };
+
+    await this.snapshotRepository.save(snapshotEntity);
+
+    this.logger.debug(`Saved snapshot for aggregate ${aggregateId} at version ${version}`);
+
+    return Result.ok();
   }
 
   async getSnapshot(
@@ -399,6 +468,108 @@ export class PostgreSqlEventStore implements IEventStore {
   private emitMetrics(metricName: string, value: number, tags?: Record<string, string>): void {
     // In production, integrate with monitoring service (Prometheus, DataDog, etc.)
     this.logger.debug(`METRIC: ${metricName}=${value}`, tags);
+  }
+
+  /**
+   * Classify database errors into transient vs permanent
+   *
+   * Transient errors (should retry):
+   * - Network timeouts, connection errors
+   * - Connection pool exhausted
+   * - Deadlock detected
+   * - Database temporarily unavailable
+   *
+   * Permanent errors (should NOT retry):
+   * - Unique constraint violation
+   * - Foreign key constraint violation
+   * - Data type mismatch
+   * - Invalid SQL syntax
+   * - Permission denied
+   *
+   * @param error - Database error object
+   * @returns true if error is transient and should be retried
+   */
+  private isTransientError(error: unknown): boolean {
+    if (error === null || error === undefined || typeof error !== 'object') {
+      return false;
+    }
+
+    const err = error as { code?: string; message?: string; errno?: number };
+
+    // PostgreSQL error codes: https://www.postgresql.org/docs/current/errcodes-appendix.html
+
+    // Connection errors (08xxx) - Always retry
+    if (err.code?.startsWith('08') === true) {
+      return true; // Connection exception, connection failure, etc.
+    }
+
+    // Insufficient resources (53xxx) - Retry
+    if (err.code?.startsWith('53') === true) {
+      return true; // Out of memory, disk full, too many connections
+    }
+
+    // Operator intervention (57xxx) - Retry
+    if (err.code?.startsWith('57') === true) {
+      return true; // Database shutdown, crash shutdown, cannot connect now
+    }
+
+    // Transaction rollback (40xxx) - Retry
+    if (err.code === '40001') {
+      return true; // Serialization failure (deadlock)
+    }
+    if (err.code === '40P01') {
+      return true; // Deadlock detected
+    }
+
+    // Lock timeout - Retry
+    if (err.code === '55P03') {
+      return true; // Lock not available
+    }
+
+    // Network/timeout errors (by message pattern)
+    const message = err.message?.toLowerCase() ?? '';
+    if (message.length > 0) {
+      if (
+        message.includes('timeout') ||
+        message.includes('connection') ||
+        message.includes('network') ||
+        message.includes('econnrefused') ||
+        message.includes('enotfound') ||
+        message.includes('etimedout')
+      ) {
+        return true;
+      }
+    }
+
+    // Permanent errors - DO NOT retry
+
+    // Unique constraint violation (23505)
+    if (err.code === '23505') {
+      return false;
+    }
+
+    // Foreign key violation (23503)
+    if (err.code === '23503') {
+      return false;
+    }
+
+    // Check violation (23514)
+    if (err.code === '23514') {
+      return false;
+    }
+
+    // Invalid data type (22xxx)
+    if (err.code?.startsWith('22') === true) {
+      return false;
+    }
+
+    // Syntax error (42xxx)
+    if (err.code?.startsWith('42') === true) {
+      return false;
+    }
+
+    // Default: don't retry unknown errors (safer)
+    return false;
   }
 
   /**
